@@ -1,0 +1,39 @@
+# Arquivos de configuração
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+
+# Dependências
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Build outputs
+build/
+dist/
+staticfiles/
+
+# Database
+*.sqlite3
+*.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Media files
+media/
+
+# Docker
+.dockerignore

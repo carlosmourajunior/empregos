@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   Container,
   Paper,
@@ -33,9 +33,9 @@ const steps = [
 const CurriculoForm = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const { id: userId } = useParams(); // ID do usuário da URL
   const isAdmin = user?.tipo_usuario === 'admin';
-  const curriculoId = searchParams.get('id');
+  const isEditing = Boolean(userId); // Se tem ID na URL, está editando
   
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -89,11 +89,18 @@ const CurriculoForm = () => {
   useEffect(() => {
     if (isAdmin) {
       loadTrabalhadores();
-    }
-    if (!curriculoId) {
+      if (userId) {
+        // Admin editando currículo de um usuário específico
+        loadCurriculoPorUsuario(userId);
+      }
+    } else if (isEditing) {
+      // Trabalhador não pode editar currículo de outro
+      navigate('/curriculo/editar');
+    } else {
+      // Trabalhador editando seu próprio currículo
       loadCurriculo();
     }
-  }, [isAdmin, curriculoId]);
+  }, [isAdmin, userId, isEditing]);
 
   const loadTrabalhadores = async () => {
     try {
@@ -104,56 +111,98 @@ const CurriculoForm = () => {
     }
   };
 
+  const loadCurriculoPorUsuario = async (userId) => {
+    try {
+      const response = await api.get(`/api/curriculos/usuario/${userId}/`);
+      const data = response.data;
+      
+      // Para admin editando, definir o trabalhador selecionado
+      if (isAdmin && data.trabalhador) {
+        setSelectedTrabalhador(data.trabalhador);
+      }
+      
+      setCurriculoData(data);
+    } catch (error) {
+      console.error('Erro ao carregar currículo por usuário:', error);
+      if (error.response?.status === 404) {
+        setError('Este usuário ainda não possui currículo cadastrado.');
+      } else {
+        setError('Erro ao carregar dados do currículo');
+      }
+    }
+  };
+
+  const loadCurriculoPorId = async (id) => {
+    try {
+      const response = await api.get(`/api/curriculos/${id}/`);
+      const data = response.data;
+      
+      // Para admin editando, definir o trabalhador selecionado
+      if (isAdmin && data.trabalhador) {
+        setSelectedTrabalhador(data.trabalhador);
+      }
+      
+      setCurriculoData(data);
+    } catch (error) {
+      console.error('Erro ao carregar currículo por ID:', error);
+      setError('Erro ao carregar dados do currículo');
+    }
+  };
+
   const loadCurriculo = async () => {
     try {
       const response = await api.get('/api/curriculos/meu/');
       const data = response.data;
       
-      setCurriculo({
-        objetivo: data.objetivo || '',
-        resumo_profissional: data.resumo_profissional || '',
-        pretensao_salarial: data.pretensao_salarial || '',
-        disponibilidade_viagem: data.disponibilidade_viagem || false,
-        disponibilidade_mudanca: data.disponibilidade_mudanca || false,
-      });
-
-      if (data.escolaridades?.length > 0) {
-        setEscolaridades(data.escolaridades);
-      }
-      
-      if (data.experiencias_profissionais?.length > 0) {
-        setExperiencias(data.experiencias_profissionais.map(exp => ({
-          empresa: exp.empresa || '',
-          cargo: exp.cargo || '',
-          descricao: exp.descricao || '',
-          data_inicio: exp.data_inicio || '',
-          data_fim: exp.data_fim || '',
-          emprego_atual: exp.emprego_atual || false,
-          salario: exp.salario || ''
-        })));
-      }
-      
-      if (data.habilidades?.length > 0) {
-        setHabilidades(data.habilidades);
-      }
-      
-      if (data.tipos_vaga_procurada?.length > 0) {
-        const tipos = data.tipos_vaga_procurada[0];
-        setPreferencias({
-          areas_interesse: tipos.areas_interesse || '',
-          cargos_interesse: tipos.cargos_interesse || '',
-          tipo_contrato: tipos.tipo_contrato || 'clt',
-          jornada_trabalho: tipos.jornada_trabalho || 'integral',
-          salario_minimo: tipos.salario_minimo || '',
-          aceita_viagem: tipos.aceita_viagem || false,
-          aceita_mudanca: tipos.aceita_mudanca || false
-        });
-      }
+      setCurriculoData(data);
     } catch (error) {
       if (error.response?.status !== 404) {
         console.error('Erro ao carregar currículo:', error);
         setError('Erro ao carregar dados do currículo');
       }
+    }
+  };
+
+  const setCurriculoData = (data) => {
+    setCurriculo({
+      objetivo: data.objetivo || '',
+      resumo_profissional: data.resumo_profissional || '',
+      pretensao_salarial: data.pretensao_salarial || '',
+      disponibilidade_viagem: data.disponibilidade_viagem || false,
+      disponibilidade_mudanca: data.disponibilidade_mudanca || false,
+    });
+
+    if (data.escolaridades?.length > 0) {
+      setEscolaridades(data.escolaridades);
+    }
+    
+    if (data.experiencias_profissionais?.length > 0) {
+      setExperiencias(data.experiencias_profissionais.map(exp => ({
+        empresa: exp.empresa || '',
+        cargo: exp.cargo || '',
+        descricao: exp.descricao || '',
+        data_inicio: exp.data_inicio || '',
+        data_fim: exp.data_fim || '',
+        emprego_atual: exp.emprego_atual || false,
+        salario: exp.salario || ''
+      })));
+    }
+    
+    if (data.habilidades?.length > 0) {
+      setHabilidades(data.habilidades);
+    }
+    
+    if (data.tipos_vaga_procurada?.length > 0) {
+      const tipos = data.tipos_vaga_procurada[0];
+      setPreferencias({
+        areas_interesse: tipos.areas_interesse || '',
+        cargos_interesse: tipos.cargos_interesse || '',
+        tipo_contrato: tipos.tipo_contrato || 'clt',
+        jornada_trabalho: tipos.jornada_trabalho || 'integral',
+        salario_minimo: tipos.salario_minimo || '',
+        aceita_viagem: tipos.aceita_viagem || false,
+        aceita_mudanca: tipos.aceita_mudanca || false
+      });
     }
   };
 
@@ -170,8 +219,8 @@ const CurriculoForm = () => {
       setLoading(true);
       setError('');
       
-      // Validação para admin
-      if (isAdmin && !selectedTrabalhador) {
+      // Validação para admin criando novo currículo
+      if (isAdmin && !curriculoId && !selectedTrabalhador) {
         setError('Selecione um trabalhador para criar o currículo');
         return;
       }
@@ -209,12 +258,19 @@ const CurriculoForm = () => {
         tipos_vaga_procurada: preferencias.areas_interesse || preferencias.cargos_interesse ? [preferencias] : []
       };
 
-      // Se for admin, adicionar o trabalhador selecionado
-      if (isAdmin && selectedTrabalhador) {
+      // Se for admin criando novo currículo, adicionar o trabalhador selecionado
+      if (isAdmin && !curriculoId && selectedTrabalhador) {
         data.trabalhador_id = selectedTrabalhador.id;
       }
 
-      await api.post('/api/curriculos/', data);
+      // Escolher método HTTP baseado em se está editando ou criando
+      if (curriculoId) {
+        // Editando currículo existente
+        await api.put(`/api/curriculos/${curriculoId}/`, data);
+      } else {
+        // Criando novo currículo
+        await api.post('/api/curriculos/', data);
+      }
       
       // Redirecionar conforme o tipo de usuário
       if (isAdmin) {
@@ -252,11 +308,16 @@ const CurriculoForm = () => {
 
   const renderDadosBasicos = () => (
     <Grid container spacing={3}>
-      {isAdmin && (
+      {isAdmin && !isEditing && (
         <Grid item xs={12}>
           <Autocomplete
             options={trabalhadores}
-            getOptionLabel={(option) => `${option.first_name} ${option.last_name} (${option.email})`}
+            getOptionLabel={(option) => {
+              const firstName = option.usuario?.first_name || option.first_name || '';
+              const lastName = option.usuario?.last_name || option.last_name || '';
+              const email = option.usuario?.email || option.email || '';
+              return `${firstName} ${lastName} (${email})`.trim();
+            }}
             value={selectedTrabalhador}
             onChange={(event, newValue) => setSelectedTrabalhador(newValue)}
             renderInput={(params) => (
@@ -268,6 +329,14 @@ const CurriculoForm = () => {
               />
             )}
           />
+        </Grid>
+      )}
+      
+      {isAdmin && isEditing && selectedTrabalhador && (
+        <Grid item xs={12}>
+          <Alert severity="info">
+            Editando currículo de: <strong>{selectedTrabalhador.first_name} {selectedTrabalhador.last_name}</strong> ({selectedTrabalhador.email})
+          </Alert>
         </Grid>
       )}
       

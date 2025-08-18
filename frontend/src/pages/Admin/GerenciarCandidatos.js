@@ -117,11 +117,19 @@ const GerenciarCandidatos = () => {
             sx={{ flexGrow: 1 }}
           />
           <Button
-            variant="contained"
+            variant="outlined"
             startIcon={<AddIcon />}
             onClick={() => navigate('/candidatos/criar')}
+            sx={{ mr: 1 }}
           >
-            Adicionar Candidato
+            Criar Simples
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/candidatos/criar-completo')}
+          >
+            Criar com Currículo
           </Button>
         </Box>
 

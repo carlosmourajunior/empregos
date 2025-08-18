@@ -132,7 +132,7 @@ class TipoVagaProcurada(models.Model):
     cargos_interesse = models.TextField(help_text="Cargos de interesse separados por vírgula")
     tipo_contrato = models.CharField(max_length=15, choices=TIPO_CONTRATO_CHOICES)
     jornada_trabalho = models.CharField(max_length=15, choices=JORNADA_CHOICES)
-    salario_minimo = models.DecimalField(max_digits=10, decimal_places=2)
+    salario_minimo = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     aceita_viagem = models.BooleanField(default=False)
     aceita_mudanca = models.BooleanField(default=False)
     

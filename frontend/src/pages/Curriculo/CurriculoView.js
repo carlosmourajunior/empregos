@@ -41,12 +41,20 @@ const CurriculoView = () => {
 
   const carregarCurriculo = async () => {
     try {
-      const response = await api.get(`/api/curriculos/${id || 'meu'}/`);
+      let response;
+      if (id) {
+        // Se tem ID na URL, é um admin visualizando currículo de candidato
+        response = await api.get(`/api/curriculos/usuario/${id}/`);
+      } else {
+        // Se não tem ID, é o próprio trabalhador visualizando seu currículo
+        response = await api.get(`/api/curriculos/meu/`);
+      }
+      
       setCurriculo(response.data);
       
       // Verificar se é o dono do currículo
       const userId = localStorage.getItem('userId');
-      const curriculoUserId = response.data.trabalhador?.user?.id || response.data.trabalhador?.id;
+      const curriculoUserId = response.data.trabalhador?.id;
       setIsOwner(!id || (curriculoUserId == userId));
     } catch (error) {
       console.error('Erro ao carregar currículo:', error);
@@ -116,14 +124,14 @@ const CurriculoView = () => {
             </Avatar>
             <Box>
               <Typography variant="h4" component="h1" gutterBottom>
-                {curriculo.trabalhador?.user?.first_name || ''} {curriculo.trabalhador?.user?.last_name || ''}
+                {curriculo.trabalhador?.first_name || ''} {curriculo.trabalhador?.last_name || ''}
               </Typography>
               <Typography variant="h6" color="textSecondary" gutterBottom>
                 {curriculo.objetivo || 'Objetivo não informado'}
               </Typography>
               <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 1 }}>
-                {curriculo.trabalhador?.user?.email && (
-                  <Chip icon={<Email />} label={curriculo.trabalhador.user.email} />
+                {curriculo.trabalhador?.email && (
+                  <Chip icon={<Email />} label={curriculo.trabalhador.email} />
                 )}
                 {curriculo.telefone && (
                   <Chip icon={<Phone />} label={curriculo.telefone} />

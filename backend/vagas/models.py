@@ -50,6 +50,18 @@ class Vaga(models.Model):
         ('senior', 'Sênior'),
         ('especialista', 'Especialista'),
     ])
+    numero_vagas = models.PositiveIntegerField(default=1)
+    data_limite = models.DateField(null=True, blank=True)
+    escolaridade_minima = models.CharField(max_length=50, choices=[
+        ('fundamental', 'Ensino Fundamental'),
+        ('medio', 'Ensino Médio'),
+        ('tecnico', 'Ensino Técnico'),
+        ('superior', 'Ensino Superior'),
+        ('pos_graduacao', 'Pós-graduação'),
+        ('mestrado', 'Mestrado'),
+        ('doutorado', 'Doutorado'),
+    ], blank=True)
+    experiencia_minima = models.PositiveIntegerField(default=0, help_text="Experiência mínima em anos")
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='ativa')
     data_criacao = models.DateTimeField(auto_now_add=True)
     data_atualizacao = models.DateTimeField(auto_now=True)

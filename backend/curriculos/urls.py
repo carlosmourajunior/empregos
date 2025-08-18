@@ -5,6 +5,7 @@ urlpatterns = [
     path('', views.CurriculoListCreateView.as_view(), name='curriculo_list_create'),
     path('<int:pk>/', views.CurriculoDetailView.as_view(), name='curriculo_detail'),
     path('meu/', views.meu_curriculo, name='meu_curriculo'),
+    path('usuario/<int:user_id>/', views.curriculo_por_usuario, name='curriculo_por_usuario'),
     
     # Escolaridade
     path('<int:curriculo_id>/escolaridades/', views.EscolaridadeListCreateView.as_view(), name='escolaridade_list_create'),

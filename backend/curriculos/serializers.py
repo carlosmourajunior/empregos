@@ -46,7 +46,7 @@ class CurriculoSerializer(serializers.ModelSerializer):
     habilidades = HabilidadeSerializer(many=True, read_only=True)
     cursos = CursoSerializer(many=True, read_only=True)
     idiomas = IdiomaSerializer(many=True, read_only=True)
-    tipos_vaga_procurada = TipoVagaProcuradaSerializer(source='tipovagaprocurada_set', many=True, read_only=True)
+    tipo_vaga_procurada = TipoVagaProcuradaSerializer(read_only=True)
     trabalhador_nome = serializers.CharField(source='trabalhador.get_full_name', read_only=True)
     
     # Incluir dados do trabalhador
@@ -54,17 +54,23 @@ class CurriculoSerializer(serializers.ModelSerializer):
     
     def get_trabalhador(self, obj):
         return {
-            'user': {
-                'id': obj.trabalhador.id,
-                'first_name': obj.trabalhador.first_name,
-                'last_name': obj.trabalhador.last_name,
-                'email': obj.trabalhador.email,
-            }
+            'id': obj.trabalhador.id,
+            'first_name': obj.trabalhador.first_name,
+            'last_name': obj.trabalhador.last_name,
+            'email': obj.trabalhador.email,
+            'telefone': obj.trabalhador.telefone,
+            'date_joined': obj.trabalhador.date_joined
         }
     
     class Meta:
         model = Curriculo
-        fields = '__all__'
+        fields = [
+            'id', 'nome_completo', 'email', 'telefone', 'endereco', 'cidade', 
+            'cep', 'data_nascimento', 'genero', 'nacionalidade', 'estado_civil',
+            'objetivo_profissional', 'resumo_qualificacoes', 'tipo_vaga_procurada',
+            'trabalhador', 'trabalhador_nome', 'escolaridades', 
+            'experiencias_profissionais', 'habilidades', 'cursos', 'idiomas'
+        ]
         read_only_fields = ('trabalhador',)
 
 class CurriculoCreateSerializer(serializers.ModelSerializer):
@@ -74,7 +80,7 @@ class CurriculoCreateSerializer(serializers.ModelSerializer):
     habilidades = HabilidadeSerializer(many=True, required=False)
     cursos = CursoSerializer(many=True, required=False)
     idiomas = IdiomaSerializer(many=True, required=False)
-    tipos_vaga_procurada = TipoVagaProcuradaSerializer(many=True, required=False)
+    tipo_vaga_procurada = TipoVagaProcuradaSerializer(required=False)
     
     class Meta:
         model = Curriculo
@@ -88,7 +94,7 @@ class CurriculoCreateSerializer(serializers.ModelSerializer):
         habilidades_data = validated_data.pop('habilidades', [])
         cursos_data = validated_data.pop('cursos', [])
         idiomas_data = validated_data.pop('idiomas', [])
-        tipos_vaga_data = validated_data.pop('tipos_vaga_procurada', [])
+        tipo_vaga_data = validated_data.pop('tipo_vaga_procurada', None)
         
         # Criar currículo
         curriculo = Curriculo.objects.create(**validated_data)
@@ -109,7 +115,7 @@ class CurriculoCreateSerializer(serializers.ModelSerializer):
         for idioma_data in idiomas_data:
             Idioma.objects.create(curriculo=curriculo, **idioma_data)
         
-        for tipo_vaga_data in tipos_vaga_data:
+        if tipo_vaga_data:
             TipoVagaProcurada.objects.create(curriculo=curriculo, **tipo_vaga_data)
         
         return curriculo
@@ -121,7 +127,7 @@ class CurriculoCreateSerializer(serializers.ModelSerializer):
         habilidades_data = validated_data.pop('habilidades', None)
         cursos_data = validated_data.pop('cursos', None)
         idiomas_data = validated_data.pop('idiomas', None)
-        tipos_vaga_data = validated_data.pop('tipos_vaga_procurada', None)
+        tipo_vaga_data = validated_data.pop('tipo_vaga_procurada', None)
         
         # Atualizar currículo
         for attr, value in validated_data.items():
@@ -154,9 +160,9 @@ class CurriculoCreateSerializer(serializers.ModelSerializer):
             for idioma_data in idiomas_data:
                 Idioma.objects.create(curriculo=instance, **idioma_data)
         
-        if tipos_vaga_data is not None:
-            instance.tipovagaprocurada_set.all().delete()
-            for tipo_vaga_data in tipos_vaga_data:
-                TipoVagaProcurada.objects.create(curriculo=instance, **tipo_vaga_data)
+        if tipo_vaga_data is not None:
+            # Deletar tipo de vaga existente
+            TipoVagaProcurada.objects.filter(curriculo=instance).delete()
+            TipoVagaProcurada.objects.create(curriculo=instance, **tipo_vaga_data)
         
         return instance

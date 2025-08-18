@@ -2,6 +2,7 @@ from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from .models import Vaga, CandidaturaVaga, AvaliacaoCandidato
 from .serializers import (
@@ -45,10 +46,31 @@ class VagaListCreateView(generics.ListCreateAPIView):
         return queryset.order_by('-data_criacao')
     
     def perform_create(self, serializer):
-        if self.request.user.tipo_usuario != 'empresa':
-            raise permissions.PermissionDenied("Apenas empresas podem criar vagas.")
+        user = self.request.user
         
-        vaga = serializer.save(empresa=self.request.user)
+        if user.tipo_usuario == 'empresa':
+            # Empresa criando vaga para si mesma
+            vaga = serializer.save(empresa=user)
+        elif user.tipo_usuario == 'admin':
+            # Admin deve especificar qual empresa
+            empresa_id = self.request.data.get('empresa')
+            if not empresa_id:
+                raise PermissionDenied("Admin deve especificar uma empresa para a vaga.")
+            
+            # Verificar se a empresa existe e está ativa
+            from usuarios.models import CustomUser
+            try:
+                empresa = CustomUser.objects.get(
+                    id=empresa_id, 
+                    tipo_usuario='empresa', 
+                    aprovado=True,
+                    ativo=True
+                )
+                vaga = serializer.save(empresa=empresa)
+            except CustomUser.DoesNotExist:
+                raise PermissionDenied("Empresa não encontrada ou não está ativa.")
+        else:
+            raise PermissionDenied("Apenas empresas e administradores podem criar vagas.")
         
         # Executar matching automático
         matching_engine = MatchingEngine()

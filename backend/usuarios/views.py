@@ -5,6 +5,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password
+from django.db import transaction
 from .models import CustomUser, PerfilEmpresa, PerfilTrabalhador
 from .serializers import (
     CustomUserSerializer, PerfilEmpresaSerializer, PerfilTrabalhadorSerializer,
@@ -160,25 +161,157 @@ class CriarCandidatoView(generics.CreateAPIView):
         
         # Preparar dados do candidato
         data = request.data.copy()
-        data['password'] = make_password(data.get('password'))
+        
+        # Se não foi fornecido username, usar o email
+        if not data.get('username'):
+            data['username'] = data.get('email', '')
+        
+        # Se não foi fornecido cpf_cnpj, gerar um temporário único
+        if not data.get('cpf_cnpj'):
+            import uuid
+            data['cpf_cnpj'] = f"TEMP_{uuid.uuid4().hex[:8]}"
+        
         data['tipo_usuario'] = 'trabalhador'  # Forçar como trabalhador
         data['aprovado'] = True  # Admin cria candidatos já aprovados
-        data['is_active'] = True  # Admin cria candidatos já ativos
+        data['ativo'] = True  # Admin cria candidatos já ativos
         
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         
-        # Sempre criar perfil de trabalhador
+        # Sempre criar perfil de trabalhador com dados básicos
+        from datetime import date
         PerfilTrabalhador.objects.create(
             usuario=user,
-            telefone=user.telefone or ''
+            cpf=data.get('cpf', ''),
+            endereco=data.get('endereco', ''),
+            data_nascimento=data.get('data_nascimento') or date(1990, 1, 1)  # Data padrão
         )
         
         return Response({
             'message': 'Candidato criado com sucesso.',
             'user_id': user.id
         }, status=status.HTTP_201_CREATED)
+
+class CriarCandidatoCompletoView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    def create(self, request, *args, **kwargs):
+        # Verificar se o usuário é admin
+        if request.user.tipo_usuario != 'admin':
+            return Response({'error': 'Acesso negado.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        data = request.data.copy()
+        curriculo_data = data.pop('curriculo', {})
+        
+        try:
+            with transaction.atomic():
+                # Preparar dados do usuário
+                if not data.get('username'):
+                    data['username'] = data.get('email', '')
+                
+                if not data.get('cpf_cnpj'):
+                    import uuid
+                    data['cpf_cnpj'] = f"TEMP_{uuid.uuid4().hex[:8]}"
+                
+                data['tipo_usuario'] = 'trabalhador'
+                data['aprovado'] = True
+                data['ativo'] = True
+                
+                # Criar usuário
+                user_serializer = CustomUserSerializer(data=data)
+                user_serializer.is_valid(raise_exception=True)
+                user = user_serializer.save()
+                
+                # Criar perfil de trabalhador
+                from datetime import date
+                perfil = PerfilTrabalhador.objects.create(
+                    usuario=user,
+                    cpf=data.get('cpf', ''),
+                    endereco=data.get('endereco', ''),
+                    data_nascimento=data.get('data_nascimento') or date(1990, 1, 1)
+                )
+                
+                # Criar currículo se dados foram fornecidos
+                if curriculo_data:
+                    from curriculos.models import (
+                        Curriculo, Escolaridade, ExperienciaProfissional, 
+                        Habilidade, TipoVagaProcurada
+                    )
+                    
+                    # Criar currículo principal
+                    curriculo = Curriculo.objects.create(
+                        trabalhador=user,
+                        objetivo=curriculo_data.get('objetivo', ''),
+                        resumo_profissional=curriculo_data.get('resumo_profissional', ''),
+                        pretensao_salarial=curriculo_data.get('pretensao_salarial'),
+                        disponibilidade_viagem=curriculo_data.get('disponibilidade_viagem', False),
+                        disponibilidade_mudanca=curriculo_data.get('disponibilidade_mudanca', False)
+                    )
+                    
+                    # Criar escolaridades
+                    for esc_data in curriculo_data.get('escolaridades', []):
+                        if (esc_data.get('instituicao') and esc_data.get('curso') and 
+                            esc_data.get('nivel') and esc_data.get('ano_inicio')):
+                            Escolaridade.objects.create(
+                                curriculo=curriculo,
+                                nivel=esc_data.get('nivel'),
+                                instituicao=esc_data.get('instituicao'),
+                                curso=esc_data.get('curso'),
+                                ano_inicio=int(esc_data.get('ano_inicio')),
+                                ano_conclusao=int(esc_data.get('ano_conclusao')) if esc_data.get('ano_conclusao') else None,
+                                situacao=esc_data.get('situacao', 'concluido')
+                            )
+                    
+                    # Criar experiências
+                    for exp_data in curriculo_data.get('experiencias', []):
+                        if (exp_data.get('empresa') and exp_data.get('cargo') and 
+                            exp_data.get('descricao') and exp_data.get('data_inicio')):
+                            ExperienciaProfissional.objects.create(
+                                curriculo=curriculo,
+                                empresa=exp_data.get('empresa'),
+                                cargo=exp_data.get('cargo'),
+                                descricao=exp_data.get('descricao'),
+                                data_inicio=exp_data.get('data_inicio'),
+                                data_fim=exp_data.get('data_fim') if exp_data.get('data_fim') else None,
+                                emprego_atual=exp_data.get('emprego_atual', False),
+                                salario=float(exp_data.get('salario')) if exp_data.get('salario') else None
+                            )
+                    
+                    # Criar habilidades
+                    for hab_data in curriculo_data.get('habilidades', []):
+                        if hab_data.get('nome'):
+                            Habilidade.objects.create(
+                                curriculo=curriculo,
+                                nome=hab_data.get('nome'),
+                                nivel=hab_data.get('nivel', 'intermediario'),
+                                descricao=hab_data.get('descricao', '')
+                            )
+                    
+                    # Criar tipo de vaga procurada
+                    tipo_vaga_data = curriculo_data.get('tipo_vaga_procurada', {})
+                    if tipo_vaga_data:
+                        TipoVagaProcurada.objects.create(
+                            curriculo=curriculo,
+                            areas_interesse=tipo_vaga_data.get('areas_interesse', ''),
+                            cargos_interesse=tipo_vaga_data.get('cargos_interesse', ''),
+                            tipo_contrato=tipo_vaga_data.get('tipo_contrato', 'clt'),
+                            jornada_trabalho=tipo_vaga_data.get('jornada_trabalho', 'integral'),
+                            salario_minimo=float(tipo_vaga_data.get('salario_minimo')) if tipo_vaga_data.get('salario_minimo') else None,
+                            aceita_viagem=tipo_vaga_data.get('aceita_viagem', False),
+                            aceita_mudanca=tipo_vaga_data.get('aceita_mudanca', False)
+                        )
+                
+                return Response({
+                    'message': 'Candidato e currículo criados com sucesso.',
+                    'user_id': user.id,
+                    'curriculo_criado': bool(curriculo_data)
+                }, status=status.HTTP_201_CREATED)
+                
+        except Exception as e:
+            return Response({
+                'error': f'Erro ao criar candidato: {str(e)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 class CriarEmpresaView(generics.CreateAPIView):
     serializer_class = CustomUserSerializer
@@ -275,6 +408,77 @@ class EditarEmpresaView(generics.UpdateAPIView):
             'message': 'Empresa atualizada com sucesso.',
             'user_id': user.id
         })
+
+class EditarCandidatoView(generics.UpdateAPIView):
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomUserSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def update(self, request, *args, **kwargs):
+        # Verificar se o usuário é admin
+        if request.user.tipo_usuario != 'admin':
+            return Response({'error': 'Acesso negado.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        user = self.get_object()
+        
+        if user.tipo_usuario != 'trabalhador':
+            return Response({'error': 'Usuário não é um candidato/trabalhador.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Atualizar dados do usuário
+        user_data = request.data.copy()
+        perfil_trabalhador_data = user_data.pop('perfil_trabalhador', {})
+        
+        # Não atualizar senha pela edição (apenas se fornecida)
+        password = user_data.pop('password', None)
+        if password:
+            user.set_password(password)
+        
+        # Atualizar campos do usuário
+        for key, value in user_data.items():
+            if hasattr(user, key) and key not in ['id', 'tipo_usuario', 'date_joined']:
+                setattr(user, key, value)
+        
+        user.save()
+        
+        # Atualizar perfil de trabalhador
+        perfil_trabalhador, created = PerfilTrabalhador.objects.get_or_create(usuario=user)
+        
+        # Validar CPF único (excluindo o próprio)
+        cpf = perfil_trabalhador_data.get('cpf', '').replace('.', '').replace('-', '')
+        if cpf and PerfilTrabalhador.objects.filter(cpf=cpf).exclude(usuario=user).exists():
+            return Response({'cpf': ['Este CPF já está cadastrado.']}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if perfil_trabalhador_data:
+            perfil_trabalhador.cpf = cpf
+            perfil_trabalhador.endereco = perfil_trabalhador_data.get('endereco', perfil_trabalhador.endereco)
+            perfil_trabalhador.data_nascimento = perfil_trabalhador_data.get('data_nascimento', perfil_trabalhador.data_nascimento)
+            perfil_trabalhador.tem_habilitacao = perfil_trabalhador_data.get('tem_habilitacao', perfil_trabalhador.tem_habilitacao)
+            perfil_trabalhador.categoria_habilitacao = perfil_trabalhador_data.get('categoria_habilitacao', perfil_trabalhador.categoria_habilitacao)
+            perfil_trabalhador.linkedin = perfil_trabalhador_data.get('linkedin', perfil_trabalhador.linkedin)
+            perfil_trabalhador.save()
+        
+        return Response({
+            'message': 'Candidato atualizado com sucesso.',
+            'user_id': user.id
+        })
+
+class PerfilTrabalhadorDetailView(generics.RetrieveAPIView):
+    serializer_class = PerfilTrabalhadorSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_object(self):
+        user_id = self.kwargs['user_id']
+        try:
+            return PerfilTrabalhador.objects.get(usuario_id=user_id)
+        except PerfilTrabalhador.DoesNotExist:
+            return None
+    
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance is None:
+            return Response({'detail': 'Perfil de trabalhador não encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
 class PerfilEmpresaDetailView(generics.RetrieveAPIView):
     serializer_class = PerfilEmpresaSerializer

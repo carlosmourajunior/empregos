@@ -36,24 +36,28 @@ const CriarVaga = () => {
       titulo: '',
       empresa: null, // Para seleção de empresa pelo admin
       descricao: '',
-      responsabilidades: '',
-      requisitos_texto: '',
+      requisitos: '',
       beneficios: '',
       salario_min: '',
       salario_max: '',
-      localizacao: '',
+      local_trabalho: '',
       tipo_contrato: '',
+      jornada_trabalho: '',
+      area: '',
+      nivel_experiencia: '',
+      aceita_remoto: false,
+      requer_viagem: false,
       escolaridade_minima: '',
       experiencia_minima: 0,
       numero_vagas: 1,
       data_limite: '',
-      requisitos: []
+      requisitos_detalhados: []
     }
   });
 
   const { fields, append, remove } = useFieldArray({
     control,
-    name: 'requisitos'
+    name: 'requisitos_detalhados'
   });
 
   useEffect(() => {
@@ -73,31 +77,46 @@ const CriarVaga = () => {
   };
 
   const tiposContrato = [
-    'CLT',
-    'PJ',
-    'Temporário',
-    'Estágio',
-    'Freelancer',
-    'Meio período'
+    { value: 'clt', label: 'CLT' },
+    { value: 'pj', label: 'Pessoa Jurídica' },
+    { value: 'temporario', label: 'Temporário' },
+    { value: 'estagio', label: 'Estágio' },
+    { value: 'freelancer', label: 'Freelancer' },
+    { value: 'terceirizado', label: 'Terceirizado' }
+  ];
+
+  const jornadaTrabalho = [
+    { value: 'integral', label: 'Tempo Integral' },
+    { value: 'meio_periodo', label: 'Meio Período' },
+    { value: 'flexivel', label: 'Flexível' },
+    { value: 'escala', label: 'Escala' }
+  ];
+
+  const niveisExperiencia = [
+    { value: 'estagiario', label: 'Estagiário' },
+    { value: 'junior', label: 'Júnior' },
+    { value: 'pleno', label: 'Pleno' },
+    { value: 'senior', label: 'Sênior' },
+    { value: 'especialista', label: 'Especialista' }
   ];
 
   const niveisEscolaridade = [
-    'Fundamental',
-    'Médio',
-    'Técnico',
-    'Superior',
-    'Pós-graduação',
-    'Mestrado',
-    'Doutorado'
+    { value: 'fundamental', label: 'Ensino Fundamental' },
+    { value: 'medio', label: 'Ensino Médio' },
+    { value: 'tecnico', label: 'Ensino Técnico' },
+    { value: 'superior', label: 'Ensino Superior' },
+    { value: 'pos_graduacao', label: 'Pós-graduação' },
+    { value: 'mestrado', label: 'Mestrado' },
+    { value: 'doutorado', label: 'Doutorado' }
   ];
 
   const tiposRequisito = [
-    'Experiência',
-    'Habilidade',
-    'Certificação',
-    'Idioma',
-    'Software',
-    'Outro'
+    'escolaridade',
+    'experiencia', 
+    'habilidade',
+    'idioma',
+    'certificacao',
+    'habilitacao'
   ];
 
   const onSubmit = async (data) => {
@@ -136,9 +155,9 @@ const CriarVaga = () => {
 
   const adicionarRequisito = () => {
     append({
-      tipo_requisito: '',
+      tipo: '',
       descricao: '',
-      obrigatorio: false
+      nivel_importancia: 'obrigatorio'
     });
   };
 
@@ -241,18 +260,18 @@ const CriarVaga = () => {
 
             <Grid item xs={12}>
               <Controller
-                name="responsabilidades"
+                name="requisitos"
                 control={control}
-                rules={{ required: 'Responsabilidades são obrigatórias' }}
+                rules={{ required: 'Requisitos são obrigatórios' }}
                 render={({ field }) => (
                   <TextField
                     {...field}
-                    label="Responsabilidades"
+                    label="Requisitos"
                     multiline
                     rows={3}
                     fullWidth
-                    error={!!errors.responsabilidades}
-                    helperText={errors.responsabilidades?.message}
+                    error={!!errors.requisitos}
+                    helperText={errors.requisitos?.message}
                   />
                 )}
               />
@@ -283,16 +302,33 @@ const CriarVaga = () => {
 
             <Grid item xs={12} md={6}>
               <Controller
-                name="localizacao"
+                name="local_trabalho"
                 control={control}
-                rules={{ required: 'Localização é obrigatória' }}
+                rules={{ required: 'Local de trabalho é obrigatório' }}
                 render={({ field }) => (
                   <TextField
                     {...field}
-                    label="Localização"
+                    label="Local de Trabalho"
                     fullWidth
-                    error={!!errors.localizacao}
-                    helperText={errors.localizacao?.message}
+                    error={!!errors.local_trabalho}
+                    helperText={errors.local_trabalho?.message}
+                  />
+                )}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <Controller
+                name="area"
+                control={control}
+                rules={{ required: 'Área é obrigatória' }}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Área"
+                    fullWidth
+                    error={!!errors.area}
+                    helperText={errors.area?.message}
                   />
                 )}
               />
@@ -308,8 +344,28 @@ const CriarVaga = () => {
                     <InputLabel>Tipo de Contrato</InputLabel>
                     <Select {...field} label="Tipo de Contrato">
                       {tiposContrato.map((tipo) => (
-                        <MenuItem key={tipo} value={tipo}>
-                          {tipo}
+                        <MenuItem key={tipo.value} value={tipo.value}>
+                          {tipo.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <Controller
+                name="jornada_trabalho"
+                control={control}
+                rules={{ required: 'Jornada de trabalho é obrigatória' }}
+                render={({ field }) => (
+                  <FormControl fullWidth error={!!errors.jornada_trabalho}>
+                    <InputLabel>Jornada de Trabalho</InputLabel>
+                    <Select {...field} label="Jornada de Trabalho">
+                      {jornadaTrabalho.map((jornada) => (
+                        <MenuItem key={jornada.value} value={jornada.value}>
+                          {jornada.label}
                         </MenuItem>
                       ))}
                     </Select>
@@ -387,14 +443,34 @@ const CriarVaga = () => {
               <Controller
                 name="escolaridade_minima"
                 control={control}
-                rules={{ required: 'Escolaridade mínima é obrigatória' }}
                 render={({ field }) => (
-                  <FormControl fullWidth error={!!errors.escolaridade_minima}>
+                  <FormControl fullWidth>
                     <InputLabel>Escolaridade Mínima</InputLabel>
                     <Select {...field} label="Escolaridade Mínima">
+                      <MenuItem value="">Não especificado</MenuItem>
                       {niveisEscolaridade.map((nivel) => (
-                        <MenuItem key={nivel} value={nivel}>
-                          {nivel}
+                        <MenuItem key={nivel.value} value={nivel.value}>
+                          {nivel.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <Controller
+                name="nivel_experiencia"
+                control={control}
+                rules={{ required: 'Nível de experiência é obrigatório' }}
+                render={({ field }) => (
+                  <FormControl fullWidth error={!!errors.nivel_experiencia}>
+                    <InputLabel>Nível de Experiência</InputLabel>
+                    <Select {...field} label="Nível de Experiência">
+                      {niveisExperiencia.map((nivel) => (
+                        <MenuItem key={nivel.value} value={nivel.value}>
+                          {nivel.label}
                         </MenuItem>
                       ))}
                     </Select>
@@ -414,6 +490,32 @@ const CriarVaga = () => {
                     type="number"
                     fullWidth
                     InputProps={{ inputProps: { min: 0 } }}
+                  />
+                )}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <Controller
+                name="aceita_remoto"
+                control={control}
+                render={({ field }) => (
+                  <FormControlLabel
+                    control={<Checkbox {...field} checked={field.value} />}
+                    label="Aceita trabalho remoto"
+                  />
+                )}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <Controller
+                name="requer_viagem"
+                control={control}
+                render={({ field }) => (
+                  <FormControlLabel
+                    control={<Checkbox {...field} checked={field.value} />}
+                    label="Requer viagens"
                   />
                 )}
               />
@@ -442,7 +544,7 @@ const CriarVaga = () => {
                     <Grid container spacing={2}>
                       <Grid item xs={12} md={3}>
                         <Controller
-                          name={`requisitos.${index}.tipo_requisito`}
+                          name={`requisitos_detalhados.${index}.tipo`}
                           control={control}
                           rules={{ required: 'Tipo é obrigatório' }}
                           render={({ field }) => (
@@ -459,9 +561,9 @@ const CriarVaga = () => {
                           )}
                         />
                       </Grid>
-                      <Grid item xs={12} md={6}>
+                      <Grid item xs={12} md={5}>
                         <Controller
-                          name={`requisitos.${index}.descricao`}
+                          name={`requisitos_detalhados.${index}.descricao`}
                           control={control}
                           rules={{ required: 'Descrição é obrigatória' }}
                           render={({ field }) => (
@@ -473,15 +575,19 @@ const CriarVaga = () => {
                           )}
                         />
                       </Grid>
-                      <Grid item xs={12} md={2}>
+                      <Grid item xs={12} md={3}>
                         <Controller
-                          name={`requisitos.${index}.obrigatorio`}
+                          name={`requisitos_detalhados.${index}.nivel_importancia`}
                           control={control}
                           render={({ field }) => (
-                            <FormControlLabel
-                              control={<Checkbox {...field} checked={field.value} />}
-                              label="Obrigatório"
-                            />
+                            <FormControl fullWidth>
+                              <InputLabel>Importância</InputLabel>
+                              <Select {...field} label="Importância">
+                                <MenuItem value="obrigatorio">Obrigatório</MenuItem>
+                                <MenuItem value="desejavel">Desejável</MenuItem>
+                                <MenuItem value="diferencial">Diferencial</MenuItem>
+                              </Select>
+                            </FormControl>
                           )}
                         />
                       </Grid>

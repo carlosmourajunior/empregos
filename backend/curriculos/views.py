@@ -90,17 +90,39 @@ class CurriculoDetailView(generics.RetrieveUpdateDestroyAPIView):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def meu_curriculo(request):
-    """Retorna o currículo do trabalhador logado"""
-    if request.user.tipo_usuario != 'trabalhador':
-        return Response({'error': 'Apenas trabalhadores têm currículo.'}, 
+    """Retorna o currículo do trabalhador logado ou permite admin acessar qualquer currículo"""
+    if request.user.tipo_usuario == 'trabalhador':
+        try:
+            curriculo = Curriculo.objects.get(trabalhador=request.user)
+            serializer = CurriculoSerializer(curriculo)
+            return Response(serializer.data)
+        except Curriculo.DoesNotExist:
+            return Response({'message': 'Currículo não encontrado. Crie um novo currículo.'}, 
+                           status=status.HTTP_404_NOT_FOUND)
+    elif request.user.tipo_usuario == 'admin':
+        # Admin pode acessar qualquer currículo, mas este endpoint é para "meu" currículo
+        # Admin deveria usar o endpoint com ID específico
+        return Response({'error': 'Admin deve acessar currículos usando o ID específico.'}, 
+                       status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response({'error': 'Apenas trabalhadores têm currículo próprio.'}, 
                        status=status.HTTP_403_FORBIDDEN)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def curriculo_por_usuario(request, user_id):
+    """Retorna o currículo de um usuário específico (apenas para admin)"""
+    if request.user.tipo_usuario != 'admin':
+        return Response({'error': 'Acesso negado.'}, status=status.HTTP_403_FORBIDDEN)
     
     try:
-        curriculo = Curriculo.objects.get(trabalhador=request.user)
+        from usuarios.models import CustomUser
+        trabalhador = get_object_or_404(CustomUser, id=user_id, tipo_usuario='trabalhador')
+        curriculo = Curriculo.objects.get(trabalhador=trabalhador)
         serializer = CurriculoSerializer(curriculo)
         return Response(serializer.data)
     except Curriculo.DoesNotExist:
-        return Response({'message': 'Currículo não encontrado. Crie um novo currículo.'}, 
+        return Response({'message': 'Currículo não encontrado para este usuário.'}, 
                        status=status.HTTP_404_NOT_FOUND)
 
 # Views para gerenciar componentes individuais do currículo
@@ -124,7 +146,8 @@ class EscolaridadeListCreateView(generics.ListCreateAPIView):
         curriculo_id = self.kwargs['curriculo_id']
         curriculo = get_object_or_404(Curriculo, id=curriculo_id)
         
-        if self.request.user != curriculo.trabalhador:
+        if (self.request.user != curriculo.trabalhador and 
+            self.request.user.tipo_usuario != 'admin'):
             raise permissions.PermissionDenied()
         
         serializer.save(curriculo=curriculo)
@@ -161,7 +184,8 @@ class ExperienciaListCreateView(generics.ListCreateAPIView):
         curriculo_id = self.kwargs['curriculo_id']
         curriculo = get_object_or_404(Curriculo, id=curriculo_id)
         
-        if self.request.user != curriculo.trabalhador:
+        if (self.request.user != curriculo.trabalhador and 
+            self.request.user.tipo_usuario != 'admin'):
             raise permissions.PermissionDenied()
         
         serializer.save(curriculo=curriculo)
@@ -198,8 +222,11 @@ class HabilidadeListCreateView(generics.ListCreateAPIView):
         curriculo_id = self.kwargs['curriculo_id']
         curriculo = get_object_or_404(Curriculo, id=curriculo_id)
         
-        if self.request.user != curriculo.trabalhador:
+        if (self.request.user != curriculo.trabalhador and 
+            self.request.user.tipo_usuario != 'admin'):
             raise permissions.PermissionDenied()
+        
+        serializer.save(curriculo=curriculo)
         
         serializer.save(curriculo=curriculo)
 

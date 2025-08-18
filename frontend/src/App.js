@@ -13,6 +13,7 @@ import GerenciarCandidatos from './pages/Admin/GerenciarCandidatos';
 import GerenciarEmpresas from './pages/Admin/GerenciarEmpresas';
 import CriarEmpresa from './pages/Admin/CriarEmpresa';
 import CriarUsuario from './pages/Admin/CriarUsuario';
+import CriarCandidatoCompleto from './pages/Admin/CriarCandidatoCompleto';
 import CurriculoForm from './pages/Curriculo/CurriculoForm';
 import CurriculoView from './pages/Curriculo/CurriculoView';
 import AdminPanel from './pages/Admin/AdminPanel';
@@ -77,6 +78,7 @@ function App() {
             <Route path="gerenciar-candidatos" element={<GerenciarCandidatos />} />
             <Route path="gerenciar-empresas" element={<GerenciarEmpresas />} />
             <Route path="candidatos/criar" element={<CriarUsuario />} />
+            <Route path="candidatos/criar-completo" element={<CriarCandidatoCompleto />} />
             <Route path="empresas/criar" element={<CriarEmpresa />} />
             <Route path="empresas/:id/editar" element={<CriarEmpresa />} />
             <Route path="vagas/criar" element={<CriarVaga />} />

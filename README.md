@@ -52,10 +52,6 @@ docker-compose up --build
 - Backend API: http://localhost:8000
 - Admin Django: http://localhost:8000/admin
 
-### Usuário Admin Padrão
-- Email: admin@prefeitura.gov.br
-- Senha: admin123
-
 ## 📊 Modelos de Dados
 
 ### Usuários

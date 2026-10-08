@@ -1,11 +1,12 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import type { ComponentProps } from 'react'
+import { Link } from 'react-router-dom'
 
 import { cn } from '@/lib/utils'
 
 // Botões grandes (mínimo 48px) para facilitar o toque no celular.
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-3 rounded-lg font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-6 [&_svg]:shrink-0',
+  'inline-flex items-center justify-center gap-3 rounded-2xl font-bold transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-6 [&_svg]:shrink-0',
   {
     variants: {
       variant: {
@@ -24,11 +25,21 @@ const buttonVariants = cva(
   },
 )
 
-export function Button({
-  className,
-  variant,
-  size,
-  ...props
-}: ComponentProps<'button'> & VariantProps<typeof buttonVariants>) {
-  return <button className={cn(buttonVariants({ variant, size }), className)} {...props} />
+type Props = ComponentProps<'button'> & VariantProps<typeof buttonVariants> & { asLink?: string }
+
+/** Com `asLink`, vira um link com cara de botão (navegação sem formulário). */
+export function Button({ className, variant, size, asLink, children, ...props }: Props) {
+  const classes = cn(buttonVariants({ variant, size }), className)
+  if (asLink) {
+    return (
+      <Link to={asLink} className={classes}>
+        {children}
+      </Link>
+    )
+  }
+  return (
+    <button className={classes} {...props}>
+      {children}
+    </button>
+  )
 }

@@ -51,3 +51,67 @@ export type Usuario = {
   telefone_verificado: boolean
   permissoes: { aprovar_vagas: boolean }
 }
+
+export type Paginado<T> = { count: number; next: string | null; previous: string | null; results: T[] }
+
+export type Vaga = {
+  id: number
+  cargo: string
+  area: string
+  descricao: string
+  salario: string | null
+  contrato: string
+  contrato_nome: string
+  horario: string
+  horario_nome: string
+  bairro: string
+  quantidade: number
+  empresa: string
+  criada_em: string
+  tenho_interesse: boolean
+}
+
+export type StatusVaga = 'pendente' | 'aprovada' | 'recusada' | 'encerrada'
+
+export type VagaEmpresa = {
+  id: number
+  cargo: string
+  area: string
+  descricao: string
+  salario: string | null
+  contrato: string
+  horario: string
+  bairro: string
+  quantidade: number
+  status: StatusVaga
+  status_nome: string
+  interessados: number
+  criada_em: string
+}
+
+export type Experiencia = { o_que_fazia: string; onde: string; quanto_tempo: string }
+
+export type Curriculo = {
+  data_nascimento: string
+  bairro: string
+  escolaridade: string
+  areas_interesse: string[]
+  tem_cnh: boolean
+  categoria_cnh: string
+  experiencias: Experiencia[]
+}
+
+export type Interessado = {
+  id: number
+  criado_em: string
+  nome: string
+  telefone: string
+  cpf: string
+  idade: number | null
+  bairro: string
+  escolaridade: string
+  areas_interesse: string[]
+  tem_cnh: boolean
+  categoria_cnh: string
+  experiencias: Experiencia[]
+}

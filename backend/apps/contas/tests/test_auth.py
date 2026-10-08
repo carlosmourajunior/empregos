@@ -2,18 +2,12 @@ from unittest.mock import patch
 
 import pytest
 from django.contrib.auth.models import Permission
-from rest_framework.test import APIClient
 
 from apps.contas.models import Usuario
 from apps.contas.validators import cnpj_valido, cpf_valido
 
 CPF = "52998224725"
 CNPJ = "11222333000181"
-
-
-@pytest.fixture
-def api():
-    return APIClient()
 
 
 @pytest.fixture

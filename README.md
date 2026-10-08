@@ -55,12 +55,13 @@ O GitHub Actions roda tudo isso a cada push e pull request.
 1. Copie `.env.example` para `.env` e preencha (senha do Postgres, `DJANGO_SECRET_KEY`, domínio, Evolution API).
 2. Suba: `docker compose up -d --build`. O frontend fica em `127.0.0.1:8080` (mude com `PORTA`).
 3. No Cloudflare Tunnel, aponte o subdomínio (ex.: `emprego.rlcsolucoes.com.br`) para `http://localhost:8080`.
-4. Crie o primeiro usuário da prefeitura e dê a permissão de aprovador:
+4. Crie a conta do primeiro aprovador pelo próprio site (como candidato) e dê a permissão a ele:
 
 ```bash
-docker compose exec backend python manage.py createsuperuser
 docker compose exec backend python manage.py tornar_aprovador <CPF>
 ```
+
+Depois disso, a própria equipe inclui outras pessoas em **Área da prefeitura → Equipe** (`/prefeitura/equipe`).
 
 ## API (até agora)
 
@@ -74,3 +75,16 @@ docker compose exec backend python manage.py tornar_aprovador <CPF>
 | POST | `/api/auth/logout/` | Sai |
 | GET / DELETE | `/api/auth/eu/` | Dados do usuário logado / apagar a conta (LGPD) |
 | GET | `/api/saude/` | Verificação de saúde |
+
+Área da prefeitura (só quem tem a permissão `vagas.aprovar_vaga`):
+
+| Método | Rota | O que faz |
+| --- | --- | --- |
+| GET | `/api/painel/numeros/` | Números do início: vagas, currículos, interesses, por área |
+| GET | `/api/painel/vagas/?status=&busca=&empresa=` | Todas as vagas (fila de aprovação: mais antiga primeiro) |
+| POST | `/api/painel/vagas/avaliar/` | Aprova ou recusa uma ou várias vagas (`ids`, `decisao`, `motivo`) |
+| GET | `/api/painel/empresas/` | Empresas e quantas vagas cada uma tem |
+| POST | `/api/painel/empresas/<id>/bloquear/` | Bloqueia ou desbloqueia a empresa (`bloqueada`) |
+| GET / POST | `/api/painel/equipe/` | Lista aprovadores / inclui pelo CPF |
+| DELETE | `/api/painel/equipe/<id>/` | Tira a permissão |
+| GET | `/api/painel/exportar/<vagas\|curriculos\|empresas>/` | Planilha .xlsx |

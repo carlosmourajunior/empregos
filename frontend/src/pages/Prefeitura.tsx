@@ -9,7 +9,12 @@ export default function Prefeitura() {
     return (
       <main className="mx-auto max-w-3xl px-8 py-16">
         <h1 className="text-2xl font-bold">Área da prefeitura</h1>
-        <p className="text-muted-foreground mt-2">Entre com uma conta que tenha permissão de aprovador.</p>
+        <p className="text-muted-foreground mt-2">
+          Entre com uma conta que tenha permissão de aprovador.{' '}
+          <a href="/entrar" className="text-primary font-semibold underline">
+            Entrar
+          </a>
+        </p>
       </main>
     )
   }

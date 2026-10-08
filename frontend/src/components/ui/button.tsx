@@ -1,5 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import type { ComponentProps } from 'react'
+import { Link } from 'react-router-dom'
 
 import { cn } from '@/lib/utils'
 
@@ -24,11 +25,21 @@ const buttonVariants = cva(
   },
 )
 
-export function Button({
-  className,
-  variant,
-  size,
-  ...props
-}: ComponentProps<'button'> & VariantProps<typeof buttonVariants>) {
-  return <button className={cn(buttonVariants({ variant, size }), className)} {...props} />
+type Props = ComponentProps<'button'> & VariantProps<typeof buttonVariants> & { asLink?: string }
+
+/** Com `asLink`, vira um link com cara de botão (navegação sem formulário). */
+export function Button({ className, variant, size, asLink, children, ...props }: Props) {
+  const classes = cn(buttonVariants({ variant, size }), className)
+  if (asLink) {
+    return (
+      <Link to={asLink} className={classes}>
+        {children}
+      </Link>
+    )
+  }
+  return (
+    <button className={classes} {...props}>
+      {children}
+    </button>
+  )
 }

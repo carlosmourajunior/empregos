@@ -77,6 +77,14 @@ class VerificarCodigoSerializer(DocumentoSerializer):
     codigo = serializers.RegexField(r"^\d{6}$", error_messages={"invalid": "O código tem 6 números."})
 
 
+class NovaSenhaSerializer(VerificarCodigoSerializer):
+    senha = serializers.CharField(write_only=True)
+
+    def validate_senha(self, valor):
+        _campo(validate_password, valor)
+        return valor
+
+
 class UsuarioSerializer(serializers.ModelSerializer):
     permissoes = serializers.SerializerMethodField()
 

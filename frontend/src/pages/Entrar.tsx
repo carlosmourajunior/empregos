@@ -61,6 +61,9 @@ export default function Entrar() {
         <Button type="submit" size="lg" disabled={enviando}>
           {enviando ? 'Entrando...' : 'Entrar'}
         </Button>
+        <Link to="/esqueci-senha" className="text-primary -mt-2 text-center text-lg font-semibold underline">
+          Esqueci a senha
+        </Link>
       </form>
       <p className="text-center text-lg">
         Ainda não tem conta?{' '}

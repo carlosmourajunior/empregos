@@ -1,9 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { MessageCircle } from 'lucide-react'
 import { type FormEvent, useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { Campo } from '@/components/Campo'
+import { IlustracaoCelular } from '@/components/ilustracoes'
 import { Tela } from '@/components/Tela'
 import { Button } from '@/components/ui/button'
 import { api, type Usuario } from '@/lib/api'
@@ -59,11 +59,12 @@ export default function Codigo() {
   }
 
   return (
-    <Tela titulo="Confirme seu WhatsApp" voltarPara="/entrar">
-      <div className="bg-muted flex items-start gap-3 rounded-lg p-4 text-lg">
-        <MessageCircle className="text-primary mt-0.5 size-7 shrink-0" />
-        <p>Mandamos uma mensagem no seu WhatsApp com um código de 6 números.</p>
-      </div>
+    <Tela
+      titulo="Confirme seu WhatsApp"
+      subtitulo="Mandamos um código de 6 números para o seu WhatsApp."
+      voltarPara="/entrar"
+      ilustracao={<IlustracaoCelular className="mx-auto -mb-6 h-44" />}
+    >
       <form onSubmit={confirmar} className="flex flex-col gap-6">
         <Campo
           rotulo="Digite o código"

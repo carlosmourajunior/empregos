@@ -1,3 +1,4 @@
+import { Briefcase, IdCard, Lock, type LucideIcon, Search, Smartphone, UserRound } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
@@ -20,19 +21,36 @@ export default function CriarConta() {
 
 function EscolherTipo() {
   return (
-    <Tela titulo="Criar conta" voltarPara="/">
-      <p className="text-xl">Você quer:</p>
-      <div className="flex flex-col gap-4">
-        <Button asLink="/criar-conta?tipo=candidato" size="lg">
-          Procurar emprego
-        </Button>
-        <Button asLink="/criar-conta?tipo=empresa" size="lg" variant="outline">
-          Oferecer vagas (empresa)
-        </Button>
-      </div>
+    <Tela titulo="Criar conta" subtitulo="O que você quer fazer?" voltarPara="/">
+      <Link
+        to="/criar-conta?tipo=candidato"
+        className="bg-primary-soft hover:ring-primary flex items-center gap-4 rounded-2xl p-4 ring-2 ring-transparent transition"
+      >
+        <span className="bg-primary grid size-16 shrink-0 place-items-center rounded-2xl text-white">
+          <Search className="size-8" />
+        </span>
+        <span>
+          <span className="block text-xl font-bold">Procurar emprego</span>
+          <span className="text-muted-foreground block text-base">Para quem quer trabalhar</span>
+        </span>
+      </Link>
+      <Link
+        to="/criar-conta?tipo=empresa"
+        className="bg-accent-soft hover:ring-accent flex items-center gap-4 rounded-2xl p-4 ring-2 ring-transparent transition"
+      >
+        <span className="bg-accent text-accent-foreground grid size-16 shrink-0 place-items-center rounded-2xl">
+          <Briefcase className="size-8" />
+        </span>
+        <span>
+          <span className="block text-xl font-bold">Oferecer vagas</span>
+          <span className="text-muted-foreground block text-base">Para empresas da cidade</span>
+        </span>
+      </Link>
     </Tela>
   )
 }
+
+const ICONES: Record<Chave, LucideIcon> = { nome: UserRound, documento: IdCard, telefone: Smartphone, senha: Lock }
 
 function Formulario({ tipo }: { tipo: Tipo }) {
   const navigate = useNavigate()
@@ -121,7 +139,12 @@ function Formulario({ tipo }: { tipo: Tipo }) {
   const ultimo = passo === PASSOS.length - 1
 
   return (
-    <Tela titulo={empresa ? 'Cadastro da empresa' : 'Seu cadastro'} voltarPara={passo === 0 ? '/criar-conta' : undefined}>
+    <Tela
+      titulo={empresa ? 'Cadastro da empresa' : 'Seu cadastro'}
+      subtitulo="Uma pergunta de cada vez"
+      icone={ICONES[chave]}
+      voltarPara={passo === 0 ? '/criar-conta' : undefined}
+    >
       <Progresso passo={passo + 1} total={PASSOS.length} />
       <form onSubmit={avancar} className="flex flex-col gap-6" noValidate>
         <Campo

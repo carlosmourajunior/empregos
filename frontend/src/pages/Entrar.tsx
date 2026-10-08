@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
+import { KeyRound } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
@@ -36,7 +37,7 @@ export default function Entrar() {
   }
 
   return (
-    <Tela titulo="Entrar" voltarPara="/">
+    <Tela titulo="Entrar" subtitulo="Que bom ter você de volta" icone={KeyRound} voltarPara="/">
       <form onSubmit={entrar} className="flex flex-col gap-6">
         <Campo
           rotulo="Seu CPF ou CNPJ"

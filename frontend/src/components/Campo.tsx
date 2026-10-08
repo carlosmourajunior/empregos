@@ -13,7 +13,7 @@ export function Campo({ rotulo, dica, erro, ...props }: Props) {
   const id = useId()
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor={id} className="text-2xl font-semibold">
+      <label htmlFor={id} className="text-xl font-bold">
         {rotulo}
       </label>
       {dica && <p className="text-muted-foreground text-base">{dica}</p>}

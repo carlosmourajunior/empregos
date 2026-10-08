@@ -81,6 +81,7 @@ gunzip -c backups/meuemprego-AAAA-MM-DD.sql.gz | docker compose exec -T db psql 
 | POST | `/api/auth/enviar-codigo/` | Reenvia o código |
 | POST | `/api/auth/verificar-codigo/` | Confirma o telefone e entra |
 | POST | `/api/auth/login/` | Entra com CPF/CNPJ + senha |
+| POST | `/api/auth/nova-senha/` | Esqueci a senha: código do WhatsApp + senha nova |
 | POST | `/api/auth/logout/` | Sai |
 | GET / DELETE | `/api/auth/eu/` | Dados do usuário logado / apagar a conta (LGPD) |
 | GET | `/api/saude/` | Verificação de saúde |

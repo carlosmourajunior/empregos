@@ -63,6 +63,15 @@ docker compose exec backend python manage.py tornar_aprovador <CPF>
 
 Depois disso, a própria equipe inclui outras pessoas em **Área da prefeitura → Equipe** (`/prefeitura/equipe`).
 
+### Backup
+
+O serviço `backup` grava uma cópia do banco por dia em `./backups` e guarda os últimos 14 dias. Vale copiar essa pasta
+para fora do servidor de vez em quando (outro disco ou nuvem). Para restaurar uma cópia:
+
+```bash
+gunzip -c backups/meuemprego-AAAA-MM-DD.sql.gz | docker compose exec -T db psql -U meuemprego meuemprego
+```
+
 ## API (até agora)
 
 | Método | Rota | O que faz |

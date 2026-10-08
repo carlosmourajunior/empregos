@@ -144,7 +144,12 @@ export default function Inicio() {
         </section>
       </main>
 
-      <footer className="text-muted-foreground pb-8 text-center text-sm">Desenvolvido por RLC Soluções</footer>
+      <footer className="text-muted-foreground flex flex-col gap-1 pb-8 text-center text-sm">
+        <Link to="/termos" className="underline">
+          Termos de uso e privacidade
+        </Link>
+        Desenvolvido por RLC Soluções
+      </footer>
     </div>
   )
 }

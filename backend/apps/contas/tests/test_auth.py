@@ -23,7 +23,7 @@ def ultimo_codigo(enviados):
 
 def cadastrar(api, **extra):
     dados = {"documento": "529.982.247-25", "nome": "Maria", "telefone": "(11) 98888-7777", "tipo": "candidato"}
-    dados.update(senha="segredo123", **extra)
+    dados.update({"senha": "segredo123", "aceito": True, **extra})
     return api.post("/api/auth/cadastro/", dados, format="json")
 
 
@@ -112,3 +112,11 @@ def test_comando_tornar_aprovador():
     usuario = Usuario.objects.get(pk=usuario.pk)
     assert usuario.tipo == Usuario.Tipo.PREFEITURA
     assert usuario.has_perm("vagas.aprovar_vaga")
+
+
+def test_cadastro_exige_aceite_dos_termos(db, api, codigos_enviados):
+    resposta = cadastrar(api, aceito=False)
+    assert resposta.status_code == 400
+    assert "aceito" in resposta.json()
+    assert cadastrar(api).status_code == 201
+    assert Usuario.objects.get(documento=CPF).aceitou_termos_em is not None

@@ -58,6 +58,8 @@ function Formulario({ tipo }: { tipo: Tipo }) {
   const [dados, setDados] = useState<Record<Chave, string>>({ nome: '', documento: '', telefone: '', senha: '' })
   const [erros, setErros] = useState<Partial<Record<Chave, string>>>({})
   const [enviando, setEnviando] = useState(false)
+  const [aceito, setAceito] = useState(false)
+  const [erroAceite, setErroAceite] = useState('')
 
   const empresa = tipo === 'empresa'
   const chave = PASSOS[passo]
@@ -115,9 +117,13 @@ function Formulario({ tipo }: { tipo: Tipo }) {
       setPasso(passo + 1)
       return
     }
+    if (!aceito) {
+      setErroAceite('Marque que você leu e aceita os termos.')
+      return
+    }
     setEnviando(true)
     try {
-      await api('/auth/cadastro/', { method: 'POST', body: { ...dados, tipo } })
+      await api('/auth/cadastro/', { method: 'POST', body: { ...dados, tipo, aceito } })
       navigate(`/codigo?documento=${soDigitos(dados.documento)}`)
     } catch (e) {
       if (e instanceof ApiError) {
@@ -157,6 +163,29 @@ function Formulario({ tipo }: { tipo: Tipo }) {
           autoFocus
           {...pergunta.props}
         />
+        {ultimo && (
+          <div className="flex flex-col gap-1">
+            <label className="bg-primary-soft flex cursor-pointer items-start gap-3 rounded-2xl p-4">
+              <input
+                type="checkbox"
+                checked={aceito}
+                onChange={(e) => {
+                  setAceito(e.target.checked)
+                  setErroAceite('')
+                }}
+                className="accent-primary mt-1 size-6 shrink-0"
+              />
+              <span className="text-lg">
+                Li e aceito os{' '}
+                <Link to="/termos" target="_blank" className="text-primary font-bold underline">
+                  termos de uso e privacidade
+                </Link>
+                .
+              </span>
+            </label>
+            {erroAceite && <p className="text-destructive text-base font-semibold">{erroAceite}</p>}
+          </div>
+        )}
         <div className="flex flex-col gap-3">
           <Button type="submit" size="lg" disabled={enviando}>
             {ultimo ? (enviando ? 'Criando...' : 'Criar conta') : 'Continuar'}

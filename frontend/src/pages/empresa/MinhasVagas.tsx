@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Briefcase, CheckCircle2, Clock, Hourglass, Pencil, Plus, Users, XCircle } from 'lucide-react'
 
+import { ApagarConta } from '@/components/ApagarConta'
 import { AreaLogada, Vazio } from '@/components/AreaLogada'
 import { Button } from '@/components/ui/button'
 import { api, type StatusVaga, type VagaEmpresa } from '@/lib/api'
@@ -114,6 +115,7 @@ export default function MinhasVagas() {
           }
         />
       )}
+      {!isLoading && <ApagarConta texto="A empresa, todas as vagas e a lista de interessados serão apagadas." />}
     </AreaLogada>
   )
 }

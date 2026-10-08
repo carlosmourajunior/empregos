@@ -35,6 +35,7 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     telefone = models.CharField("telefone (WhatsApp)", max_length=13)
     tipo = models.CharField(max_length=10, choices=Tipo.choices, default=Tipo.CANDIDATO)
     telefone_verificado = models.BooleanField(default=False)
+    aceitou_termos_em = models.DateTimeField("aceitou os termos em", null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     criado_em = models.DateTimeField(auto_now_add=True)

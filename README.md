@@ -63,6 +63,15 @@ docker compose exec backend python manage.py tornar_aprovador <CPF>
 
 Depois disso, a própria equipe inclui outras pessoas em **Área da prefeitura → Equipe** (`/prefeitura/equipe`).
 
+### Backup
+
+O serviço `backup` grava uma cópia do banco por dia em `./backups` e guarda os últimos 14 dias. Vale copiar essa pasta
+para fora do servidor de vez em quando (outro disco ou nuvem). Para restaurar uma cópia:
+
+```bash
+gunzip -c backups/meuemprego-AAAA-MM-DD.sql.gz | docker compose exec -T db psql -U meuemprego meuemprego
+```
+
 ## API (até agora)
 
 | Método | Rota | O que faz |
@@ -72,6 +81,7 @@ Depois disso, a própria equipe inclui outras pessoas em **Área da prefeitura �
 | POST | `/api/auth/enviar-codigo/` | Reenvia o código |
 | POST | `/api/auth/verificar-codigo/` | Confirma o telefone e entra |
 | POST | `/api/auth/login/` | Entra com CPF/CNPJ + senha |
+| POST | `/api/auth/nova-senha/` | Esqueci a senha: código do WhatsApp + senha nova |
 | POST | `/api/auth/logout/` | Sai |
 | GET / DELETE | `/api/auth/eu/` | Dados do usuário logado / apagar a conta (LGPD) |
 | GET | `/api/saude/` | Verificação de saúde |

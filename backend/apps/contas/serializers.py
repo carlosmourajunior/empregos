@@ -1,5 +1,6 @@
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.utils import timezone
 from rest_framework import serializers
 
 from .models import Usuario
@@ -19,10 +20,16 @@ class CadastroSerializer(serializers.ModelSerializer):
     telefone = serializers.CharField()
     senha = serializers.CharField(write_only=True)
     tipo = serializers.ChoiceField(choices=[Usuario.Tipo.CANDIDATO, Usuario.Tipo.EMPRESA])
+    aceito = serializers.BooleanField(write_only=True)
 
     class Meta:
         model = Usuario
-        fields = ["documento", "nome", "telefone", "tipo", "senha"]
+        fields = ["documento", "nome", "telefone", "tipo", "senha", "aceito"]
+
+    def validate_aceito(self, valor):
+        if not valor:
+            raise serializers.ValidationError("Para criar a conta, é preciso aceitar os termos.")
+        return valor
 
     def validate_documento(self, valor):
         documento = _campo(validar_documento, valor)
@@ -46,7 +53,9 @@ class CadastroSerializer(serializers.ModelSerializer):
 
     def create(self, dados):
         senha = dados.pop("senha")
-        return Usuario.objects.create_user(password=senha, **dados)
+        dados.pop("aceito")
+        # Guarda quando a pessoa aceitou os termos (consentimento da LGPD).
+        return Usuario.objects.create_user(password=senha, aceitou_termos_em=timezone.now(), **dados)
 
 
 class LoginSerializer(serializers.Serializer):
@@ -66,6 +75,14 @@ class DocumentoSerializer(serializers.Serializer):
 
 class VerificarCodigoSerializer(DocumentoSerializer):
     codigo = serializers.RegexField(r"^\d{6}$", error_messages={"invalid": "O código tem 6 números."})
+
+
+class NovaSenhaSerializer(VerificarCodigoSerializer):
+    senha = serializers.CharField(write_only=True)
+
+    def validate_senha(self, valor):
+        _campo(validate_password, valor)
+        return valor
 
 
 class UsuarioSerializer(serializers.ModelSerializer):

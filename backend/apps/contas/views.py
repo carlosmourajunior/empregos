@@ -12,6 +12,7 @@ from .serializers import (
     CadastroSerializer,
     DocumentoSerializer,
     LoginSerializer,
+    NovaSenhaSerializer,
     UsuarioSerializer,
     VerificarCodigoSerializer,
 )
@@ -77,6 +78,26 @@ class VerificarCodigoView(PublicoView):
         if not usuario.telefone_verificado:
             usuario.telefone_verificado = True
             usuario.save(update_fields=["telefone_verificado"])
+        login(request, usuario)
+        return Response(UsuarioSerializer(usuario).data)
+
+
+class NovaSenhaView(PublicoView):
+    """Esqueci a senha: o código do WhatsApp (pedido em enviar-codigo/) libera trocar a senha."""
+
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "login"
+
+    def post(self, request):
+        serializer = NovaSenhaSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        dados = serializer.validated_data
+        usuario = Usuario.objects.filter(documento=dados["documento"], is_active=True).first()
+        if not usuario or not conferir_codigo(usuario, dados["codigo"]):
+            return Response({"detail": "Código errado ou vencido."}, status=status.HTTP_400_BAD_REQUEST)
+        usuario.set_password(dados["senha"])
+        usuario.telefone_verificado = True
+        usuario.save(update_fields=["password", "telefone_verificado"])
         login(request, usuario)
         return Response(UsuarioSerializer(usuario).data)
 

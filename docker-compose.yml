@@ -32,5 +32,30 @@ services:
     ports:
       - "127.0.0.1:${PORTA:-8080}:80"
 
+  # Cópia do banco todo dia, guardada em ./backups (as dos últimos 14 dias).
+  backup:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGUSER: meuemprego
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: meuemprego
+    volumes:
+      - ./backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint:
+      - sh
+      - -c
+      - |
+        while true; do
+          arquivo=/backups/meuemprego-$$(date +%Y-%m-%d).sql.gz
+          pg_dump --no-owner | gzip > $$arquivo.tmp && mv $$arquivo.tmp $$arquivo && echo "backup ok: $$arquivo"
+          find /backups -name 'meuemprego-*.sql.gz' -mtime +14 -delete
+          sleep 86400
+        done
+
 volumes:
   dados_postgres:

@@ -12,9 +12,11 @@ import FormVaga from '@/pages/empresa/FormVaga'
 import Interessados from '@/pages/empresa/Interessados'
 import MinhasVagas from '@/pages/empresa/MinhasVagas'
 import Entrar from '@/pages/Entrar'
+import EsqueciSenha from '@/pages/EsqueciSenha'
 import Inicio from '@/pages/Inicio'
 import NaoEncontrada from '@/pages/NaoEncontrada'
 import Prefeitura from '@/pages/Prefeitura'
+import Termos from '@/pages/Termos'
 
 export default function App() {
   return (
@@ -23,6 +25,8 @@ export default function App() {
       <Route path="/entrar" element={<Entrar />} />
       <Route path="/criar-conta" element={<CriarConta />} />
       <Route path="/codigo" element={<Codigo />} />
+      <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+      <Route path="/termos" element={<Termos />} />
 
       {/* Vagas abertas: qualquer pessoa vê; para mostrar interesse precisa entrar. */}
       <Route path="/vagas" element={<Vagas />} />

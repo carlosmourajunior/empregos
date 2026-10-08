@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Briefcase, Car, FileText, GraduationCap, MapPin, Pencil, Phone, Printer } from 'lucide-react'
 import type { ReactNode } from 'react'
 
+import { ApagarConta } from '@/components/ApagarConta'
 import { AreaLogada, Vazio } from '@/components/AreaLogada'
 import { Button } from '@/components/ui/button'
 import { api, ApiError, type Curriculo as TipoCurriculo } from '@/lib/api'
@@ -111,6 +112,7 @@ export default function Curriculo() {
           </div>
         </>
       )}
+      {!isLoading && <ApagarConta texto="Seu currículo e seus interesses em vagas serão apagados." />}
     </AreaLogada>
   )
 }

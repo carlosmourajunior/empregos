@@ -29,7 +29,7 @@ class VagasView(generics.ListAPIView):
     serializer_class = VagaPublicaSerializer
 
     def get_queryset(self):
-        vagas = Vaga.objects.filter(status=Vaga.Status.APROVADA).select_related("empresa")
+        vagas = Vaga.publicas().select_related("empresa")
         params = self.request.query_params
         if busca := params.get("busca", "").strip():
             vagas = vagas.filter(Q(cargo__icontains=busca) | Q(descricao__icontains=busca) | Q(area__icontains=busca))
@@ -46,7 +46,7 @@ class VagasView(generics.ListAPIView):
 class VagaView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
     serializer_class = VagaPublicaSerializer
-    queryset = Vaga.objects.filter(status=Vaga.Status.APROVADA).select_related("empresa")
+    queryset = Vaga.publicas().select_related("empresa")
 
     def get_serializer_context(self):
         return {**super().get_serializer_context(), "ids_com_interesse": _ids_com_interesse(self.request)}
@@ -58,7 +58,7 @@ class InteresseView(APIView):
     permission_classes = [EhCandidato]
 
     def post(self, request, pk):
-        vaga = get_object_or_404(Vaga, pk=pk, status=Vaga.Status.APROVADA)
+        vaga = get_object_or_404(Vaga.publicas(), pk=pk)
         if not Curriculo.objects.filter(usuario=request.user).exists():
             return Response(
                 {"detail": "Preencha seu currículo antes.", "codigo": "sem_curriculo"},

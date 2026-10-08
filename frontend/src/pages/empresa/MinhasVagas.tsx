@@ -73,6 +73,11 @@ export default function MinhasVagas() {
                 <span className={cn('inline-flex items-center gap-2 self-start rounded-full px-3 py-1 font-bold', status.cor)}>
                   <IconeStatus className="size-5" /> {status.nome}
                 </span>
+                {vaga.status === 'recusada' && vaga.motivo_recusa && (
+                  <p className="bg-coral-soft rounded-2xl p-3">
+                    <strong>Motivo:</strong> {vaga.motivo_recusa.replace(/\.$/, '')}. Toque em “Mudar” para corrigir e mandar de novo.
+                  </p>
+                )}
                 {vaga.status !== 'encerrada' && (
                   <div className="grid grid-cols-2 gap-2">
                     <Button asLink={`/empresa/vagas/${vaga.id}/interessados`} size="sm" className="col-span-2">

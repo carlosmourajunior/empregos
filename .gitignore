@@ -4,9 +4,12 @@ __pycache__/
 *.pyc
 db.sqlite3
 backend/staticfiles/
+temp_auto_push.bat
 .pytest_cache/
 .ruff_cache/
 node_modules/
 dist/
 *.tsbuildinfo
 .DS_Store
+.gitignore
+branch_structure.json

@@ -16,3 +16,8 @@ export function useUsuario() {
     },
   })
 }
+
+/** Para onde cada tipo de conta vai depois de entrar. */
+export function paginaInicial(usuario: Usuario) {
+  return { candidato: '/vagas', empresa: '/empresa', prefeitura: '/prefeitura' }[usuario.tipo]
+}

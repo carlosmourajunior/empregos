@@ -8,6 +8,7 @@ import { Tela } from '@/components/Tela'
 import { Button } from '@/components/ui/button'
 import { api, type Usuario } from '@/lib/api'
 import { soDigitos } from '@/lib/mascaras'
+import { paginaInicial } from '@/lib/usuario'
 
 const ESPERA_REENVIO = 60
 
@@ -39,7 +40,7 @@ export default function Codigo() {
     try {
       const usuario = await api<Usuario>('/auth/verificar-codigo/', { method: 'POST', body: { documento, codigo } })
       queryClient.setQueryData(['eu'], usuario)
-      navigate(usuario.tipo === 'prefeitura' ? '/prefeitura' : '/')
+      navigate(paginaInicial(usuario))
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Algo deu errado. Tente de novo.')
     } finally {

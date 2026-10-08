@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "apps.contas",
     "apps.curriculos",
     "apps.vagas",
+    "apps.painel",
 ]
 
 MIDDLEWARE = [

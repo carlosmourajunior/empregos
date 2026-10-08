@@ -86,6 +86,7 @@ export type VagaEmpresa = {
   status: StatusVaga
   status_nome: string
   interessados: number
+  motivo_recusa: string
   criada_em: string
 }
 

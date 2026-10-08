@@ -64,9 +64,10 @@ class VagaEmpresaSerializer(serializers.ModelSerializer):
             "status",
             "status_nome",
             "interessados",
+            "motivo_recusa",
             "criada_em",
         ]
-        read_only_fields = ["status", "criada_em"]
+        read_only_fields = ["status", "motivo_recusa", "criada_em"]
 
     def validate_cargo(self, valor):
         return _texto(valor)
@@ -92,6 +93,7 @@ class VagaEmpresaSerializer(serializers.ModelSerializer):
         dados["status"] = Vaga.Status.PENDENTE
         dados["avaliada_por"] = None
         dados["avaliada_em"] = None
+        dados["motivo_recusa"] = ""
         return super().update(vaga, dados)
 
 

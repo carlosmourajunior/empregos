@@ -38,6 +38,7 @@ class Vaga(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
     avaliada_em = models.DateTimeField(null=True, blank=True)
+    motivo_recusa = models.CharField("motivo da recusa", max_length=200, blank=True)
     criada_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -46,6 +47,11 @@ class Vaga(models.Model):
 
     def __str__(self):
         return self.cargo
+
+    @classmethod
+    def publicas(cls):
+        """Aprovadas e de empresa não bloqueada pela prefeitura."""
+        return cls.objects.filter(status=cls.Status.APROVADA, empresa__is_active=True)
 
 
 class Interesse(models.Model):

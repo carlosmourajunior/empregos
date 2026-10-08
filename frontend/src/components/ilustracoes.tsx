@@ -155,3 +155,30 @@ export function Bolhas({ className }: { className?: string }) {
     </svg>
   )
 }
+
+/** Prancheta com tudo conferido: fila de aprovação vazia. */
+export function IlustracaoTudoEmDia({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 220 180" className={className} role="img" aria-label="Prancheta com tudo conferido">
+      <circle cx={110} cy={96} r={78} fill="var(--leaf-soft)" />
+      <rect x={62} y={30} width={96} height={128} rx={14} fill="#C98E62" />
+      <rect x={70} y={40} width={80} height={110} rx={8} fill="#fff" />
+      <rect x={90} y={22} width={40} height={18} rx={6} fill="#5B6B8F" />
+      {[64, 92, 120].map((y) => (
+        <g key={y}>
+          <circle cx={86} cy={y} r={8} fill="#3FB67A" />
+          <path d={`M82 ${y}l3 3 5-6`} stroke="#fff" strokeWidth={2.4} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <rect x={100} y={y - 5} width={40} height={5} rx={2.5} fill="#C9D3EA" />
+          <rect x={100} y={y + 3} width={26} height={4} rx={2} fill="#E4E9F5" />
+        </g>
+      ))}
+      <g transform="translate(150 118)">
+        <circle r={22} fill="var(--accent)" />
+        <path d="M-9 0l6 6 12-13" stroke="#4A2E00" strokeWidth={4} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+      <circle cx={42} cy={50} r={5} fill="var(--accent)" />
+      <circle cx={186} cy={60} r={4} fill="#F08A5D" />
+      <circle cx={34} cy={130} r={3.5} fill="var(--primary)" />
+    </svg>
+  )
+}

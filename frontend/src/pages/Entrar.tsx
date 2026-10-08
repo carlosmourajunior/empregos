@@ -8,6 +8,7 @@ import { Tela } from '@/components/Tela'
 import { Button } from '@/components/ui/button'
 import { api, ApiError, type Usuario } from '@/lib/api'
 import { mascaraDocumento, soDigitos } from '@/lib/mascaras'
+import { paginaInicial } from '@/lib/usuario'
 
 export default function Entrar() {
   const navigate = useNavigate()
@@ -24,7 +25,7 @@ export default function Entrar() {
     try {
       const usuario = await api<Usuario>('/auth/login/', { method: 'POST', body: { documento, senha } })
       queryClient.setQueryData(['eu'], usuario)
-      navigate(usuario.tipo === 'prefeitura' ? '/prefeitura' : '/')
+      navigate(paginaInicial(usuario))
     } catch (e) {
       if (e instanceof ApiError && e.dados.codigo === 'telefone_nao_verificado') {
         navigate(`/codigo?documento=${soDigitos(documento)}`)

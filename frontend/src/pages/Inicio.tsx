@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query'
 import {
   Briefcase,
   ChefHat,
@@ -6,7 +5,6 @@ import {
   Hammer,
   Handshake,
   HardHat,
-  LogOut,
   type LucideIcon,
   MessageCircle,
   Search,
@@ -15,13 +13,12 @@ import {
   Tractor,
   Truck,
 } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 
 import { Bolhas, IlustracaoCidade } from '@/components/ilustracoes'
 import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/button'
-import { api } from '@/lib/api'
-import { useUsuario } from '@/lib/usuario'
+import { paginaInicial, useUsuario } from '@/lib/usuario'
 
 const PASSOS: { icone: LucideIcon; titulo: string; texto: string; cor: string }[] = [
   {
@@ -57,12 +54,8 @@ const AREAS: { icone: LucideIcon; nome: string }[] = [
 
 export default function Inicio() {
   const { data: usuario, isLoading } = useUsuario()
-  const queryClient = useQueryClient()
 
-  async function sair() {
-    await api('/auth/logout/', { method: 'POST' })
-    queryClient.setQueryData(['eu'], null)
-  }
+  if (usuario) return <Navigate to={paginaInicial(usuario)} replace />
 
   return (
     <div className="min-h-svh">
@@ -71,20 +64,14 @@ export default function Inicio() {
         <div className="relative mx-auto flex max-w-md flex-col gap-6 px-4 pt-4">
           <nav className="flex min-h-12 items-center justify-between">
             <Logo claro />
-            {!isLoading && !usuario && (
+            {!isLoading && (
               <Link to="/entrar" className="rounded-full bg-white/15 px-5 py-2.5 text-base font-bold hover:bg-white/25">
                 Entrar
               </Link>
             )}
           </nav>
 
-          {usuario ? (
-            <div className="space-y-2 pt-2">
-              <p className="text-lg text-white/85">Que bom ver você,</p>
-              <h1 className="text-4xl font-extrabold tracking-tight">{usuario.nome.split(' ')[0]}!</h1>
-            </div>
-          ) : (
-            <div className="space-y-3 pt-2">
+          <div className="space-y-3 pt-2">
               <span className="bg-accent text-accent-foreground inline-block rounded-full px-3 py-1 text-sm font-bold">
                 Gratuito para todos
               </span>
@@ -92,26 +79,14 @@ export default function Inicio() {
                 Trabalho perto <span className="text-accent">de você</span>
               </h1>
               <p className="text-xl text-white/85">Vagas de emprego das empresas da nossa cidade, num só lugar.</p>
-            </div>
-          )}
+          </div>
 
           <IlustracaoCidade className="-mb-1 w-full" />
         </div>
       </header>
 
       <main className="mx-auto flex max-w-md flex-col gap-10 px-4 py-8">
-        {isLoading ? null : usuario ? (
-          <section className="bg-card flex flex-col gap-4 rounded-3xl p-5 text-center shadow-xl shadow-black/5 ring-1 ring-black/5">
-            <p className="text-lg">
-              {usuario.tipo === 'empresa'
-                ? 'Em breve você vai poder cadastrar suas vagas aqui.'
-                : 'Em breve você vai ver as vagas e montar seu currículo aqui.'}
-            </p>
-            <Button variant="outline" onClick={sair}>
-              <LogOut /> Sair
-            </Button>
-          </section>
-        ) : (
+        {!isLoading && (
           <section className="flex flex-col gap-3">
             <Button asLink="/criar-conta?tipo=candidato" size="lg" className="shadow-primary/30 shadow-lg">
               <Search /> Quero trabalhar
@@ -119,6 +94,9 @@ export default function Inicio() {
             <Button asLink="/criar-conta?tipo=empresa" size="lg" variant="accent" className="shadow-lg shadow-amber-500/20">
               <Briefcase /> Quero contratar
             </Button>
+            <Link to="/vagas" className="text-primary min-h-12 py-2 text-center text-lg font-bold underline">
+              Só quero ver as vagas abertas
+            </Link>
           </section>
         )}
 

@@ -1,8 +1,13 @@
+from django.core.exceptions import ValidationError as ErroDjango
+from django.db import transaction
 from rest_framework import serializers
 
 from apps.contas.models import Usuario
-from apps.contas.validators import so_digitos
+from apps.contas.validators import normalizar_telefone, so_digitos
+from apps.curriculos.models import Curriculo
+from apps.curriculos.serializers import CurriculoSerializer
 from apps.vagas.models import Vaga
+from apps.vagas.serializers import VagaEmpresaSerializer
 
 
 class VagaPainelSerializer(serializers.ModelSerializer):
@@ -25,7 +30,9 @@ class VagaPainelSerializer(serializers.ModelSerializer):
             "area",
             "descricao",
             "salario",
+            "contrato",
             "contrato_nome",
+            "horario",
             "horario_nome",
             "bairro",
             "quantidade",
@@ -87,3 +94,71 @@ class NovoMembroSerializer(serializers.Serializer):
         if len(documento) != 11 or not usuario:
             raise serializers.ValidationError("Não achamos ninguém com esse CPF. A pessoa precisa criar a conta antes.")
         return usuario
+
+
+class VagaEdicaoSerializer(VagaEmpresaSerializer):
+    """A prefeitura corrige o anúncio sem mudar a situação dele (aprovada continua aprovada)."""
+
+    def update(self, vaga, dados):
+        return super(VagaEmpresaSerializer, self).update(vaga, dados)
+
+
+class ContaEdicaoSerializer(serializers.ModelSerializer):
+    """Nome e WhatsApp de uma empresa ou candidato, corrigidos pela prefeitura."""
+
+    telefone = serializers.CharField(max_length=30)
+
+    class Meta:
+        model = Usuario
+        fields = ["nome", "telefone"]
+
+    def validate_nome(self, valor):
+        valor = " ".join(valor.split())
+        if len(valor) < 2:
+            raise serializers.ValidationError("Escreva o nome.")
+        return valor
+
+    def validate_telefone(self, valor):
+        try:
+            return normalizar_telefone(valor)
+        except ErroDjango as erro:
+            raise serializers.ValidationError(erro.messages[0]) from erro
+
+    def update(self, conta, dados):
+        # Número novo precisa ser confirmado de novo: no próximo login chega um código nele.
+        if "telefone" in dados and dados["telefone"] != conta.telefone:
+            conta.telefone_verificado = False
+        return super().update(conta, dados)
+
+
+class CandidatoPainelSerializer(serializers.ModelSerializer):
+    curriculo = serializers.SerializerMethodField()
+    interesses = serializers.IntegerField(source="total_interesses", read_only=True)
+
+    class Meta:
+        model = Usuario
+        fields = ["id", "nome", "documento", "telefone", "criado_em", "interesses", "curriculo"]
+
+    def get_curriculo(self, candidato):
+        curriculo = getattr(candidato, "curriculo", None)
+        return CurriculoSerializer(curriculo).data if curriculo else None
+
+
+class CandidatoEdicaoSerializer(ContaEdicaoSerializer):
+    """Conta e currículo de uma vez. Sem `curriculo`, só a conta muda."""
+
+    curriculo = CurriculoSerializer(required=False)
+
+    class Meta(ContaEdicaoSerializer.Meta):
+        fields = ["nome", "telefone", "curriculo"]
+
+    @transaction.atomic
+    def update(self, candidato, dados):
+        dados_curriculo = dados.pop("curriculo", None)
+        candidato = super().update(candidato, dados)
+        if dados_curriculo is not None:
+            existente = Curriculo.objects.filter(usuario=candidato).first()
+            curriculo = CurriculoSerializer(existente, data=self.initial_data["curriculo"])
+            curriculo.is_valid(raise_exception=True)
+            curriculo.save(usuario=candidato)
+        return candidato

@@ -155,3 +155,98 @@ def test_planilhas(painel, empresa, candidato, tipo):
     assert folha.max_row == 2
     if tipo == "curriculos":
         assert "52998224725" not in str(list(folha.values))
+
+
+def test_editar_vaga_mantem_situacao(painel, empresa):
+    vaga = criar_vaga(empresa, status=Vaga.Status.APROVADA)
+    resposta = painel.patch(
+        f"/api/painel/vagas/{vaga.id}/", {"cargo": "  Padeiro  ", "salario": "1800", "horario": "tarde"}, format="json"
+    )
+    assert resposta.status_code == 200
+    assert resposta.json()["cargo"] == "Padeiro"
+    assert resposta.json()["horario_nome"] == "Tarde"
+    vaga.refresh_from_db()
+    assert vaga.status == Vaga.Status.APROVADA
+    assert vaga.salario == 1800
+
+
+def test_editar_vaga_valida_campos(painel, empresa):
+    vaga = criar_vaga(empresa)
+    resposta = painel.patch(f"/api/painel/vagas/{vaga.id}/", {"quantidade": 0}, format="json")
+    assert resposta.status_code == 400
+    assert "quantidade" in resposta.json()
+
+
+def test_editar_empresa_e_novo_telefone_precisa_confirmar(painel, empresa):
+    resposta = painel.patch(
+        f"/api/painel/empresas/{empresa.id}/",
+        {"nome": "Padaria Pão Quente", "telefone": "(11) 95555-4444"},
+        format="json",
+    )
+    assert resposta.status_code == 200
+    assert resposta.json()["nome"] == "Padaria Pão Quente"
+    empresa.refresh_from_db()
+    assert empresa.telefone == "5511955554444"
+    assert not empresa.telefone_verificado
+
+
+def test_telefone_invalido(painel, empresa):
+    resposta = painel.patch(f"/api/painel/empresas/{empresa.id}/", {"telefone": "123"}, format="json")
+    assert resposta.status_code == 400
+    assert "telefone" in resposta.json()
+
+
+def test_editar_empresa_nao_altera_candidato(painel, candidato):
+    assert painel.patch(f"/api/painel/empresas/{candidato.id}/", {"nome": "X"}, format="json").status_code == 404
+
+
+def test_lista_e_busca_de_candidatos(painel, candidato):
+    Curriculo.objects.create(
+        usuario=candidato,
+        data_nascimento="1990-05-01",
+        bairro="Vila Nova",
+        escolaridade="medio",
+        areas_interesse=["Cozinha"],
+    )
+    for busca in ("maria", "vila", "529.982", "98888"):
+        resultados = painel.get(f"/api/painel/candidatos/?busca={busca}").json()["results"]
+        assert [c["nome"] for c in resultados] == ["Maria"], busca
+        assert resultados[0]["curriculo"]["bairro"] == "Vila Nova"
+    assert painel.get("/api/painel/candidatos/?busca=centro").json()["results"] == []
+
+
+def test_editar_candidato_e_curriculo(painel, candidato):
+    curriculo = {
+        "data_nascimento": "1990-05-01",
+        "bairro": "Centro",
+        "escolaridade": "tecnico",
+        "areas_interesse": ["Limpeza", "Cozinha"],
+        "tem_cnh": True,
+        "categoria_cnh": "B",
+        "experiencias": [{"o_que_fazia": "Cozinheira", "onde": "Restaurante", "quanto_tempo": "2 anos"}],
+    }
+    resposta = painel.patch(
+        f"/api/painel/candidatos/{candidato.id}/", {"nome": "Maria Souza", "curriculo": curriculo}, format="json"
+    )
+    assert resposta.status_code == 200, resposta.json()
+    dados = resposta.json()
+    assert dados["nome"] == "Maria Souza"
+    assert dados["curriculo"]["escolaridade"] == "tecnico"
+    assert dados["curriculo"]["experiencias"][0]["onde"] == "Restaurante"
+
+    curriculo["experiencias"] = []
+    painel.patch(f"/api/painel/candidatos/{candidato.id}/", {"curriculo": curriculo}, format="json")
+    candidato.refresh_from_db()
+    assert candidato.curriculo.experiencias.count() == 0
+    assert candidato.telefone_verificado
+
+
+def test_curriculo_invalido_nao_salva_nada(painel, candidato):
+    resposta = painel.patch(
+        f"/api/painel/candidatos/{candidato.id}/",
+        {"nome": "Outra", "curriculo": {"bairro": "Centro"}},
+        format="json",
+    )
+    assert resposta.status_code == 400
+    candidato.refresh_from_db()
+    assert candidato.nome == "Maria"

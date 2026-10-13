@@ -4,6 +4,7 @@ import { Route, Routes } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useUsuario } from '@/lib/usuario'
 import AprovarVagas from '@/pages/prefeitura/AprovarVagas'
+import Candidatos from '@/pages/prefeitura/Candidatos'
 import Empresas from '@/pages/prefeitura/Empresas'
 import Equipe from '@/pages/prefeitura/Equipe'
 import { LayoutPrefeitura } from '@/pages/prefeitura/Layout'
@@ -38,6 +39,7 @@ export default function Prefeitura() {
         <Route index element={<PainelInicio />} />
         <Route path="vagas" element={<AprovarVagas />} />
         <Route path="empresas" element={<Empresas />} />
+        <Route path="candidatos" element={<Candidatos />} />
         <Route path="equipe" element={<Equipe />} />
         <Route path="planilhas" element={<Planilhas />} />
       </Route>

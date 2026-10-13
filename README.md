@@ -92,8 +92,12 @@ gunzip -c backups/meuemprego-AAAA-MM-DD.sql.gz | docker compose exec -T db psql 
 | --- | --- | --- |
 | GET | `/api/painel/numeros/` | Números do início: vagas, currículos, interesses, por área |
 | GET | `/api/painel/vagas/?status=&busca=&empresa=` | Todas as vagas (fila de aprovação: mais antiga primeiro) |
+| GET / PATCH | `/api/painel/vagas/<id>/` | Corrige o anúncio sem mudar a situação (aprovada continua aprovada) |
 | POST | `/api/painel/vagas/avaliar/` | Aprova ou recusa uma ou várias vagas (`ids`, `decisao`, `motivo`) |
 | GET | `/api/painel/empresas/` | Empresas e quantas vagas cada uma tem |
+| GET / PATCH | `/api/painel/empresas/<id>/` | Corrige nome e WhatsApp (número novo pede código no próximo login) |
+| GET | `/api/painel/candidatos/?busca=` | Candidatos com currículo (busca por nome, CPF, WhatsApp ou bairro) |
+| GET / PATCH | `/api/painel/candidatos/<id>/` | Corrige nome, WhatsApp e o currículo inteiro (`curriculo`) |
 | POST | `/api/painel/empresas/<id>/bloquear/` | Bloqueia ou desbloqueia a empresa (`bloqueada`) |
 | GET / POST | `/api/painel/equipe/` | Lista aprovadores / inclui pelo CPF |
 | DELETE | `/api/painel/equipe/<id>/` | Tira a permissão |

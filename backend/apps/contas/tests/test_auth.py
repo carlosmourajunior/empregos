@@ -140,3 +140,27 @@ def test_esqueci_a_senha(db, api, codigos_enviados):
     # O mesmo código não serve duas vezes.
     de_novo = api.post("/api/auth/nova-senha/", {"documento": CPF, "codigo": codigo, "senha": "outra-senha1"})
     assert de_novo.status_code == 400
+
+
+@pytest.fixture
+def evolution_fora_do_ar(settings):
+    import requests
+
+    settings.EVOLUTION_URL = "http://evolution.invalida"
+    with patch("apps.contas.whatsapp.requests.post", side_effect=requests.ConnectionError("recusada")):
+        yield
+
+
+def test_whatsapp_fora_do_ar_nao_deixa_conta_pela_metade(db, api, evolution_fora_do_ar):
+    resposta = cadastrar(api)
+    assert resposta.status_code == 503
+    assert "WhatsApp" in resposta.data["detail"]
+    assert not Usuario.objects.exists()
+
+
+def test_whatsapp_fora_do_ar_no_login_e_no_reenvio(db, api, evolution_fora_do_ar):
+    Usuario.objects.create_user(CPF, "Maria", "5511988887777", "segredo123")
+    resposta = api.post("/api/auth/login/", {"documento": CPF, "senha": "segredo123"}, format="json")
+    assert resposta.status_code == 503
+    resposta = api.post("/api/auth/enviar-codigo/", {"documento": CPF}, format="json")
+    assert resposta.status_code == 503

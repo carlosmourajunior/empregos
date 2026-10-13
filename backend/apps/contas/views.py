@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate, login, logout
+from django.db import transaction
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import status
@@ -40,8 +41,10 @@ class CadastroView(PublicoView):
     def post(self, request):
         serializer = CadastroSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        usuario = serializer.save()
-        enviar_codigo(usuario)
+        # Se o WhatsApp falhar, a conta não fica criada pela metade e a pessoa pode tentar de novo.
+        with transaction.atomic():
+            usuario = serializer.save()
+            enviar_codigo(usuario)
         return Response({"mensagem": "Enviamos um código para o seu WhatsApp."}, status=status.HTTP_201_CREATED)
 
 

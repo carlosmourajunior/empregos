@@ -13,17 +13,57 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
 from apps.contas.models import Usuario
+from apps.contas.validators import so_digitos
 from apps.curriculos.models import Curriculo
 from apps.vagas.models import Interesse, Vaga
 
 from .permissions import PodeAprovar
 from .serializers import (
     AvaliarSerializer,
+    CandidatoEdicaoSerializer,
+    CandidatoPainelSerializer,
+    ContaEdicaoSerializer,
     EmpresaPainelSerializer,
     MembroSerializer,
     NovoMembroSerializer,
+    VagaEdicaoSerializer,
     VagaPainelSerializer,
 )
+
+
+def _vagas():
+    return Vaga.objects.select_related("empresa", "avaliada_por").annotate(interessados=Count("interesses"))
+
+
+def _empresas():
+    return Usuario.objects.filter(tipo=Usuario.Tipo.EMPRESA).annotate(
+        vagas_abertas=Count("vagas", filter=Q(vagas__status=Vaga.Status.APROVADA), distinct=True),
+        vagas_total=Count("vagas", distinct=True),
+    )
+
+
+def _candidatos():
+    return (
+        Usuario.objects.filter(tipo=Usuario.Tipo.CANDIDATO, is_active=True)
+        .select_related("curriculo")
+        .prefetch_related("curriculo__experiencias")
+        .annotate(total_interesses=Count("interesses"))
+    )
+
+
+class EdicaoView(generics.RetrieveUpdateAPIView):
+    """Lê com o serializer do painel e grava com o de edição; a resposta já vem no formato da lista."""
+
+    permission_classes = [PodeAprovar]
+    http_method_names = ["get", "patch"]
+    serializer_edicao = None
+
+    def update(self, request, *args, **kwargs):
+        objeto = self.get_object()
+        edicao = self.serializer_edicao(objeto, data=request.data, partial=True)
+        edicao.is_valid(raise_exception=True)
+        edicao.save()
+        return Response(self.get_serializer(self.get_object()).data)
 
 
 class VagasPainelView(generics.ListAPIView):
@@ -33,7 +73,7 @@ class VagasPainelView(generics.ListAPIView):
     serializer_class = VagaPainelSerializer
 
     def get_queryset(self):
-        vagas = Vaga.objects.select_related("empresa", "avaliada_por").annotate(interessados=Count("interesses"))
+        vagas = _vagas()
         params = self.request.query_params
         if situacao := params.get("status"):
             vagas = vagas.filter(status=situacao)
@@ -45,6 +85,14 @@ class VagasPainelView(generics.ListAPIView):
             )
         # Na fila de aprovação, a mais antiga primeiro: quem esperou mais é atendido antes.
         return vagas.order_by("criada_em" if situacao == Vaga.Status.PENDENTE else "-criada_em")
+
+
+class VagaPainelView(EdicaoView):
+    serializer_class = VagaPainelSerializer
+    serializer_edicao = VagaEdicaoSerializer
+
+    def get_queryset(self):
+        return _vagas()
 
 
 @api_view(["POST"])
@@ -112,13 +160,42 @@ class EmpresasView(generics.ListAPIView):
     serializer_class = EmpresaPainelSerializer
 
     def get_queryset(self):
-        empresas = Usuario.objects.filter(tipo=Usuario.Tipo.EMPRESA).annotate(
-            vagas_abertas=Count("vagas", filter=Q(vagas__status=Vaga.Status.APROVADA)),
-            vagas_total=Count("vagas"),
-        )
+        empresas = _empresas()
         if busca := self.request.query_params.get("busca", "").strip():
             empresas = empresas.filter(Q(nome__icontains=busca) | Q(documento__contains=busca))
         return empresas.order_by("-criado_em")
+
+
+class EmpresaPainelView(EdicaoView):
+    serializer_class = EmpresaPainelSerializer
+    serializer_edicao = ContaEdicaoSerializer
+
+    def get_queryset(self):
+        return _empresas()
+
+
+class CandidatosView(generics.ListAPIView):
+    """Candidatos com o currículo. Busca por nome, CPF, WhatsApp ou bairro."""
+
+    permission_classes = [PodeAprovar]
+    serializer_class = CandidatoPainelSerializer
+
+    def get_queryset(self):
+        candidatos = _candidatos()
+        if busca := self.request.query_params.get("busca", "").strip():
+            filtro = Q(nome__icontains=busca) | Q(curriculo__bairro__icontains=busca)
+            if digitos := so_digitos(busca):
+                filtro |= Q(documento__contains=digitos) | Q(telefone__contains=digitos)
+            candidatos = candidatos.filter(filtro)
+        return candidatos.order_by("nome")
+
+
+class CandidatoPainelView(EdicaoView):
+    serializer_class = CandidatoPainelSerializer
+    serializer_edicao = CandidatoEdicaoSerializer
+
+    def get_queryset(self):
+        return _candidatos()
 
 
 @api_view(["POST"])

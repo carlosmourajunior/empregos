@@ -58,6 +58,8 @@ function Formulario({ tipo }: { tipo: Tipo }) {
   const [dados, setDados] = useState<Record<Chave, string>>({ nome: '', documento: '', telefone: '', senha: '' })
   const [erros, setErros] = useState<Partial<Record<Chave, string>>>({})
   const [enviando, setEnviando] = useState(false)
+  const [repetir, setRepetir] = useState('')
+  const [erroRepetir, setErroRepetir] = useState('')
   const [aceito, setAceito] = useState(false)
   const [erroAceite, setErroAceite] = useState('')
 
@@ -117,6 +119,10 @@ function Formulario({ tipo }: { tipo: Tipo }) {
       setPasso(passo + 1)
       return
     }
+    if (repetir !== dados.senha) {
+      setErroRepetir('As duas senhas não são iguais. Digite de novo.')
+      return
+    }
     if (!aceito) {
       setErroAceite('Marque que você leu e aceita os termos.')
       return
@@ -163,6 +169,20 @@ function Formulario({ tipo }: { tipo: Tipo }) {
           autoFocus
           {...pergunta.props}
         />
+        {ultimo && (
+          <Campo
+            rotulo="Repita a senha"
+            dica="Para ter certeza de que não errou na digitação."
+            type="password"
+            autoComplete="new-password"
+            value={repetir}
+            onChange={(e) => {
+              setRepetir(e.target.value)
+              setErroRepetir('')
+            }}
+            erro={erroRepetir}
+          />
+        )}
         {ultimo && (
           <div className="flex flex-col gap-1">
             <label className="bg-primary-soft flex cursor-pointer items-start gap-3 rounded-2xl p-4">

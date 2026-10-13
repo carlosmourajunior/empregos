@@ -19,7 +19,8 @@ export default function EsqueciSenha() {
   const [codigoEnviado, setCodigoEnviado] = useState(false)
   const [codigo, setCodigo] = useState('')
   const [senha, setSenha] = useState('')
-  const [erros, setErros] = useState<{ documento?: string; codigo?: string; senha?: string }>({})
+  const [repetir, setRepetir] = useState('')
+  const [erros, setErros] = useState<{ documento?: string; codigo?: string; senha?: string; repetir?: string }>({})
   const [enviando, setEnviando] = useState(false)
 
   async function pedirCodigo(evento: FormEvent) {
@@ -49,6 +50,10 @@ export default function EsqueciSenha() {
     }
     if (senha.length < 6) {
       setErros({ senha: 'A senha precisa ter pelo menos 6 letras ou números.' })
+      return
+    }
+    if (repetir !== senha) {
+      setErros({ repetir: 'As duas senhas não são iguais. Digite de novo.' })
       return
     }
     setEnviando(true)
@@ -113,6 +118,14 @@ export default function EsqueciSenha() {
           value={senha}
           onChange={(e) => setSenha(e.target.value)}
           erro={erros.senha}
+        />
+        <Campo
+          rotulo="Repita a senha nova"
+          type="password"
+          autoComplete="new-password"
+          value={repetir}
+          onChange={(e) => setRepetir(e.target.value)}
+          erro={erros.repetir}
         />
         <Button type="submit" size="lg" disabled={enviando}>
           {enviando ? 'Salvando...' : 'Salvar e entrar'}

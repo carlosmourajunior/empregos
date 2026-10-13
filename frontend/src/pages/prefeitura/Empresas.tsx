@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Ban, Building2, ListChecks, MessageCircle, Search, ShieldCheck } from 'lucide-react'
+import { Ban, Building2, ListChecks, MessageCircle, Pencil, Search, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -8,10 +8,12 @@ import { linkWhatsApp } from '@/lib/opcoes'
 import { type EmpresaPainel, formatarCnpj, formatarTelefone } from '@/lib/painel'
 import { cn } from '@/lib/utils'
 
+import { EditarEmpresa } from './Editar'
 import { Cabecalho } from './Layout'
 
 export default function Empresas() {
   const [busca, setBusca] = useState('')
+  const [editando, setEditando] = useState<EmpresaPainel | null>(null)
   const queryClient = useQueryClient()
   const { data } = useQuery({
     queryKey: ['painel', 'empresas', busca],
@@ -65,6 +67,14 @@ export default function Empresas() {
                   <MessageCircle className="size-4" /> {formatarTelefone(empresa.telefone)}
                 </a>
               </div>
+              <button
+                onClick={() => setEditando(empresa)}
+                className="hover:bg-muted text-primary rounded-xl p-2"
+                aria-label={`Editar ${empresa.nome}`}
+                title="Editar"
+              >
+                <Pencil className="size-5" />
+              </button>
               {empresa.bloqueada ? (
                 <span className="bg-coral-soft text-[oklch(0.5_0.16_25)] rounded-full px-3 py-1 text-sm font-bold">Bloqueada</span>
               ) : (
@@ -101,6 +111,7 @@ export default function Empresas() {
         ))}
       </div>
       {data && data.results.length === 0 && <p className="text-muted-foreground py-10 text-center">Nenhuma empresa encontrada.</p>}
+      {editando && <EditarEmpresa empresa={editando} onFechar={() => setEditando(null)} />}
     </>
   )
 }

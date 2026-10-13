@@ -7,6 +7,7 @@ import {
   Clock,
   MapPin,
   MessageCircle,
+  Pencil,
   Search,
   ShieldAlert,
   Users,
@@ -32,6 +33,7 @@ import {
 } from '@/lib/painel'
 import { cn } from '@/lib/utils'
 
+import { EditarVaga } from './Editar'
 import { Cabecalho } from './Layout'
 
 const ABAS: { status: StatusVaga | ''; nome: string }[] = [
@@ -66,6 +68,7 @@ export default function AprovarVagas() {
   const [selecionadas, setSelecionadas] = useState<number[]>([])
   const [aberta, setAberta] = useState<VagaPainel | null>(null)
   const [recusando, setRecusando] = useState<number[] | null>(null)
+  const [editando, setEditando] = useState(false)
   const queryClient = useQueryClient()
 
   const { data, isLoading } = useVagasPainel({ status, busca, empresa, pagina })
@@ -290,6 +293,17 @@ export default function AprovarVagas() {
           onFechar={() => setAberta(null)}
           onAprovar={() => avaliar.mutate({ ids: [aberta.id], decisao: 'aprovar' })}
           onRecusar={() => setRecusando([aberta.id])}
+          onEditar={() => setEditando(true)}
+        />
+      )}
+      {aberta && editando && (
+        <EditarVaga
+          vaga={aberta}
+          onFechar={() => setEditando(false)}
+          onSalvo={(vaga) => {
+            setAberta(vaga)
+            setEditando(false)
+          }}
         />
       )}
       {recusando && (
@@ -314,12 +328,14 @@ function Detalhe({
   onFechar,
   onAprovar,
   onRecusar,
+  onEditar,
 }: {
   vaga: VagaPainel
   ocupado: boolean
   onFechar: () => void
   onAprovar: () => void
   onRecusar: () => void
+  onEditar: () => void
 }) {
   const { icone: Icone, cor } = estiloDaArea(vaga.area)
   const itens = [
@@ -345,6 +361,9 @@ function Detalhe({
               {vaga.area} · cadastrada em {formatarData(vaga.criada_em)}
             </p>
           </div>
+          <button onClick={onEditar} className="hover:bg-muted text-primary rounded-xl p-2" aria-label="Editar vaga" title="Editar vaga">
+            <Pencil className="size-6" />
+          </button>
           <button onClick={onFechar} className="hover:bg-muted rounded-xl p-2" aria-label="Fechar">
             <X className="size-6" />
           </button>

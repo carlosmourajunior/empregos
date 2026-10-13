@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { Building2, ClipboardCheck, FileSpreadsheet, LayoutDashboard, LogOut, type LucideIcon, Users } from 'lucide-react'
+import { Building2, ClipboardCheck, FileSpreadsheet, LayoutDashboard, LogOut, type LucideIcon, UserRound, Users } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 
@@ -13,6 +13,7 @@ const MENU: { para: string; nome: string; icone: LucideIcon; contador?: 'pendent
   { para: '/prefeitura', nome: 'Início', icone: LayoutDashboard },
   { para: '/prefeitura/vagas', nome: 'Aprovar vagas', icone: ClipboardCheck, contador: 'pendentes' },
   { para: '/prefeitura/empresas', nome: 'Empresas', icone: Building2 },
+  { para: '/prefeitura/candidatos', nome: 'Candidatos', icone: UserRound },
   { para: '/prefeitura/equipe', nome: 'Equipe', icone: Users },
   { para: '/prefeitura/planilhas', nome: 'Planilhas', icone: FileSpreadsheet },
 ]
